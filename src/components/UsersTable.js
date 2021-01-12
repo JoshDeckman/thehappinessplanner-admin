@@ -269,7 +269,7 @@ export default function ToursTable(props) {
   return (
     <div className={classes.root}>
 
-      <Dialog open={confirmOpen} onClose={isLoading? null: closeAskforDelete} aria-labelledby="form-dialog-title" className="edit-tour-dialog">
+      <Dialog open={confirmOpen} onClose={isLoading? null: closeAskforDelete} aria-labelledby="form-dialog-title" className="edit-workshop-dialog">
         <DialogTitle id="form-dialog-title">{isLoading? `(${selected.length}) users being deleted...`: `(${selected.length}) users deleted`}</DialogTitle>
         <DialogActions>
           <Button onClick={closeAskforDelete} disabled={isLoading} color="primary">

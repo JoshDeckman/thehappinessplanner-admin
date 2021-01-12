@@ -78,6 +78,7 @@ export default function Dashboard({ firebase, exitApp, handleError }) {
   }, []);
 
   const getWorkshopData = () => {
+    console.log("Fetching Workshop data...");
     firebase.database().ref(`/workshops/`)
       .orderByChild("removed")
       .equalTo("false")
@@ -126,6 +127,7 @@ export default function Dashboard({ firebase, exitApp, handleError }) {
   };
 
   const getUserData = () => {
+    console.log("Fetching User data...");
     firebase.database().ref(`/access-level/`)
       .once("value", (snapshot) => {
         if (snapshot.val() != null) {
@@ -273,10 +275,10 @@ export default function Dashboard({ firebase, exitApp, handleError }) {
             ) : location === "workshops" ? (
               <>
                 <div className="table-holder">
-                  {/* <WorkshopsTable
+                  <WorkshopsTable
                     workshopList={workshopList}
-                    queryData={queryData}
-                  /> */}
+                    queryData={getWorkshopData}
+                  />
                 </div>
               </>
             ) : null}
