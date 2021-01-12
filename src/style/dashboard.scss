@@ -15,19 +15,19 @@
     width: 100%;
     padding: 25px;
     background-color: #fceeff;
-    border-bottom: 2px solid #c75cfe;
+    border-bottom: 2px solid #9ad2d1;
     &.dashboard {
-      background-color: #fceeff;
-      border-bottom: 2px solid #c75cfe;
+      background-color: #f8aec4;
+      border-bottom: 2px solid #9ad2d1;
       h2 {
-        color: #9038bd;
+        color: #fceeff;
       }
     }
     &.users {
-      border-bottom: 2px solid #00d0ff;
+      border-bottom: 2px solid #f8aec4;
       background-color: #d8f8ff;
       h2 {
-        color: #00657b;
+        color: #000;
       }
     }
     &.tours {
@@ -52,11 +52,11 @@
     min-width: 500px;
   }
   div.selected-menu {
-    background-color: #c75cfe;
+    background-color: #9ad2d1;
     &.users {
-      background-color: #00d0ff;
+      background-color: #f8aec4;
       &:hover {
-        background-color: #00d0ff;
+        background-color: #f8aec4;
         svg {
           color: #fff;
         }
@@ -72,7 +72,7 @@
       }
     }
     &:hover {
-      background-color: #c75cfe;
+      background-color: #9ad2d1;
       svg {
         color: #fff;
       }
@@ -112,12 +112,12 @@
       width: 100%;
     }
     &.users {
-      border: 5px solid #00d0ff;
+      border: 5px solid #f8aec4;
       h1,h3 {
-        color: #00d0ff;
+        color: #f8aec4;
       }
       &:hover {
-        background-color: #00d0ff;
+        background-color: #f8aec4;
         h1,h3 {
           color: #fff;
         }

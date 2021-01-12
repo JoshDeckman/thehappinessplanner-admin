@@ -42,7 +42,8 @@ export default function SignIn(props) {
     var requiredFields = email && email.includes("@") && pass;
     if (requiredFields) {
       //TODO: login func here
-			console.log("Logged In");
+      console.log("Logged In");
+      props.updateAuth(true);
 			setIsLoading(false);
     } else {
 			console.log("Login Failed");
@@ -69,7 +70,7 @@ export default function SignIn(props) {
         ) : (
           <>
             <img src={HappinessLogo} style={{ maxWidth: 200 }} alt="Happiness Logo"/>
-            <Typography style={{ marginTop: "20px"}}>管理者アカウント</Typography>
+            <Typography style={{ marginTop: "20px"}}>Admin Account</Typography>
             <form className={classes.form} noValidate onSubmit={handleSubmit}>
               <TextField
                 variant="outlined"
@@ -100,7 +101,7 @@ export default function SignIn(props) {
                 color="primary"
                 className="thp-button"
               >
-                ログイン
+                Login
               </Button>
             </form>
           </>
