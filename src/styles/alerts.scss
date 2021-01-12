@@ -1,0 +1,96 @@
+.success-snackbar-alert-wrap > div:first-child {
+    background-color: #9bd466;
+  }
+  
+  .error-snackbar-alert-wrap > div:first-child{
+    background-color: #fb6d8e;
+  }
+  
+  .connection-error-snackbar-alert-wrap > div:first-child{
+    background-color: #f9edbe;
+  }
+  
+  .error-icon-snackbar {
+    float: left;
+    position: absolute;
+    left: 11px;
+    top: 0;
+    bottom: 0;
+    margin: auto;
+  }
+  
+  .connection-error-icon-snackbar {
+    float: left;
+    position: absolute;
+    left: 11px;
+    top: 0;
+    bottom: 0;
+    margin: auto;
+    color: black;
+  }
+  
+  .success-icon-snackbar {
+    float: left;
+    position: absolute;
+    left: 11px;
+  }
+  
+  .error-alert-message {
+    padding-left: 15px;
+  }
+  
+  .connection-error-alert-message {
+    padding-left: 15px;
+    color: black;
+  }
+  
+  .success-alert-message {
+    padding-left: 15px;
+  }
+  
+  .form-has-error {
+    label[class*="error"] {
+      color: #f86d8f;
+    }
+    div[class*="error"] {
+      &:after {
+        border-bottom-color: #f86d8f;
+      }
+    }
+  }
+  #alert-message-content {
+    float: left;
+  }
+  .error-boundary-alignment {
+    display: flex;
+    justify-content: center;
+    text-align: center;
+  }
+  
+  div.snackbar-main-wrapper {
+    > div:first-child {
+      padding: 10px 45px 10px 25px;
+    }
+    .icon-snackbar {
+      top: 0;
+      left: 10px;
+      bottom: 0;
+      margin: auto;
+    }
+    button.error-snackbar-button,
+    button.connection-error-snackbar-button,
+    button.success-snackbar-button {
+      position: absolute;
+      right: 10px;
+      top: 0;
+      bottom: 0;
+      margin: auto;
+      height: 35px;
+      width: 35px;
+      padding: 6px;
+    }  
+    button.connection-error-snackbar-button {
+      color: #000;
+    }
+  }
+  

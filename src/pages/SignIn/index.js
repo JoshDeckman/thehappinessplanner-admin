@@ -1,5 +1,8 @@
 import React, { useState } from "react";
 
+import { login, logout } from "../../helpers/auth";
+import firebase from "firebase/app";
+
 import Button from "@material-ui/core/Button";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import TextField from "@material-ui/core/TextField";
@@ -30,7 +33,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export default function SignIn(props) {
+export default function SignIn({ updateAuth, handleError }) {
   const classes = useStyles();
   const [pass, setPass] = useState("");
   const [email, setEmail] = useState("");
@@ -38,15 +41,38 @@ export default function SignIn(props) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    setIsLoading(true);
     var requiredFields = email && email.includes("@") && pass;
+
     if (requiredFields) {
-      //TODO: login func here
-      console.log("Logged In");
-      props.updateAuth(true);
-			setIsLoading(false);
+      setIsLoading(true);
+
+      login(email, pass)
+        .then(() => {
+          const currentUserId = firebase.auth().currentUser.uid;
+          firebase.database().ref(`/access-level/${currentUserId}/`).once('value')
+            .then(snapshot => {
+              const accessLevelData = snapshot.val();
+
+              if (accessLevelData && accessLevelData.admin) {
+                setIsLoading(false);
+                updateAuth(true);
+              } else {
+                logout(email, pass);
+                handleError("Not Authorized")
+                setIsLoading(false);
+              }
+            })
+            .catch(error => {
+              handleError("An error occured. Please try again.");
+              setIsLoading(false);
+            });
+        })
+        .catch(error => {
+          handleError(error.message);
+          setIsLoading(false);
+        });
     } else {
-			console.log("Login Failed");
+      handleError("Must include a valid email and password")
 			setIsLoading(false);
 		}
   };

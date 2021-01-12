@@ -21,7 +21,7 @@ import UsersTable from '../../components/UsersTable';
 
 import HappinessLogo from "../../images/happiness-h-logo.png";
 
-import '../../style/dashboard.scss';
+import '../../styles/dashboard.scss';
 
 const drawerWidth = 240;
 
@@ -128,7 +128,7 @@ export default function Dashboard(props) {
             <Button
               variant="contained"
               color="primary"
-              className="tm-button"
+              className="thp-button"
               onClick={queryData}
               disabled={isLoading? true: false}
               startIcon={<CachedIcon />}
