@@ -1,0 +1,180 @@
+.logo-icon {
+    float: left;
+    width: 100%;
+    padding-top: 20px;
+    margin-bottom: 10px;
+    img {
+      display: block;
+      margin: auto;
+      width: 100%;
+      max-width: 40px;
+    }
+  }
+  .page-header {
+    float: left;
+    width: 100%;
+    padding: 25px;
+    background-color: #fceeff;
+    border-bottom: 2px solid #c75cfe;
+    &.dashboard {
+      background-color: #fceeff;
+      border-bottom: 2px solid #c75cfe;
+      h2 {
+        color: #9038bd;
+      }
+    }
+    &.users {
+      border-bottom: 2px solid #00d0ff;
+      background-color: #d8f8ff;
+      h2 {
+        color: #00657b;
+      }
+    }
+    &.tours {
+      background-color: #e2f1ff;
+      border-bottom: 2px solid #007eff;
+      h2 {
+        color: #0057b1;
+      }
+    }
+    h2 {
+      float: left;
+    }
+    .page-actions {
+      float: right;
+    }
+  }
+  .list-icon > div{
+    min-width: initial;
+    padding: 10px;
+  }
+  div.edit-tour-dialog > div > div:first-child {
+    min-width: 500px;
+  }
+  div.selected-menu {
+    background-color: #c75cfe;
+    &.users {
+      background-color: #00d0ff;
+      &:hover {
+        background-color: #00d0ff;
+        svg {
+          color: #fff;
+        }
+      }
+    }
+    &.tours {
+      background-color: #007eff;
+      &:hover {
+        background-color: #007eff;
+        svg {
+          color: #fff;
+        }
+      }
+    }
+    &:hover {
+      background-color: #c75cfe;
+      svg {
+        color: #fff;
+      }
+    }
+    svg {
+      color: #fff;
+    }
+  }
+  .loading-container {
+    float: left;
+    padding: 10px 25px;
+  }
+  .dash-data {
+    float: left;
+    width: 100%;
+    padding: 20px;
+  }
+  button.count-icon {
+    min-width: 200px;
+    float: left;
+    margin: 10px;
+    padding: 20px;
+    display: block;
+    h3 {
+      font-weight: 900;
+      text-align: center;
+      float: left;
+      margin-bottom: 10px;
+      width: 100%;
+      float: left;
+      width: 100%;
+    }
+    h1 {
+      text-align: center;
+      font-size: 50px;
+      float: left;
+      width: 100%;
+    }
+    &.users {
+      border: 5px solid #00d0ff;
+      h1,h3 {
+        color: #00d0ff;
+      }
+      &:hover {
+        background-color: #00d0ff;
+        h1,h3 {
+          color: #fff;
+        }
+      }
+    }
+    &.guides {
+      border: 5px solid #ff39e7;
+      h1,h3 {
+        color: #ff39e7;
+      }
+      &:hover {
+        background-color: #ff39e7;
+        h1,h3 {
+          color: #fff;
+        }
+      }
+    }
+    &.tours {
+      border: 5px solid #007eff;
+      h1,h3 {
+        color: #007eff;
+      }
+      &:hover {
+        background-color: #007eff;
+        h1,h3 {
+          color: #fff;
+        }
+      }
+    }
+  }
+  .table-holder {
+    padding: 20px;
+    float: left;
+    width: 100%;
+  }
+  .edit-dialog-form {
+    .edit-title-from {
+      margin-bottom: 20px;
+    }
+    .edit-description-from {
+      margin-bottom: 20px;
+    }
+    .edit-status-from {
+      margin-bottom: 20px;
+    }
+  }
+  .status-dropdown {
+    min-width: 150px;
+  }
+  th.table-header-text {
+    font-size: 12px;
+    white-space: nowrap;
+  }
+  
+  
+  
+  
+  
+  
+  
