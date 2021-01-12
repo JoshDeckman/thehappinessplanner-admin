@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 
 import { login, logout } from "../../helpers/auth";
-import firebase from "firebase/app";
 
 import Button from "@material-ui/core/Button";
 import CssBaseline from "@material-ui/core/CssBaseline";
@@ -33,7 +32,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export default function SignIn({ updateAuth, handleError }) {
+export default function SignIn({ firebase, updateAuth, handleError }) {
   const classes = useStyles();
   const [pass, setPass] = useState("");
   const [email, setEmail] = useState("");

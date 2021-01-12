@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
+
+import firebase from "firebase/app";
 
 import Dashboard from "./pages/Dashboard";
 import SignIn from "./pages/SignIn";
@@ -40,11 +41,11 @@ export default function App() {
       <Switch>
         {auth ? (
           <Route exact path="/">
-            <Dashboard exitApp={exitApp} />
+            <Dashboard  firebase={firebase} exitApp={exitApp} handleError={handleError} />
           </Route>
         ) : (
           <Route exact path="/">
-            <SignIn updateAuth={updateAuth} handleError={handleError} />
+            <SignIn  firebase={firebase} updateAuth={updateAuth} handleError={handleError} />
           </Route>
         )}
       </Switch>
