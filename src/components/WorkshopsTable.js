@@ -22,7 +22,8 @@ import Button from "@material-ui/core/Button";
 import Dialog from "@material-ui/core/Dialog";
 import DialogActions from "@material-ui/core/DialogActions";
 import DialogTitle from "@material-ui/core/DialogTitle";
-
+import DialogContent from "@material-ui/core/DialogContent";
+import TextField from "@material-ui/core/TextField";
 import DeleteIcon from "@material-ui/icons/Delete";
 import EditIcon from "@material-ui/icons/Edit";
 
@@ -56,10 +57,10 @@ function stableSort(array, comparator) {
 
 const headCells = [
   { id: "title", numeric: false, disablePadding: false, label: "Title" },
-  { id: "leader", numeric: false, disablePadding: false, label: "leader" },
+  { id: "leader", numeric: false, disablePadding: false, label: "Leader" },
   { id: "url", numeric: false, disablePadding: false, label: "URL" },
   { id: "days", numeric: false, disablePadding: false, label: "Days" },
-  { id: "text", numeric: false, disablePadding: false, label: "Text" },
+  { id: "text", numeric: false, disablePadding: false, label: "Description" },
   { id: "colors", numeric: false, disablePadding: false, label: "Colors" },
 ];
 
@@ -228,11 +229,12 @@ export default function WorkshopsTable({ workshopList, handleError, firebase }) 
   const [isLoading, setIsLoading] = React.useState(false);
   const [open, setOpen] = React.useState(false);
   const [confirmOpen, setConfirmOpen] = React.useState(false);
+  const [workshopEditFormInfo, setWorkshopEditFormInfo] = React.useState(null);
 
   const handleClickOpen = () => {
-    if (selected.length > 1) {
-      setOpen(true);
-    } else {
+    if (selected.length === 1) {
+      var findSelected = workshopList.find((workshop) => workshop.id === selected[0]);
+      setWorkshopEditFormInfo(findSelected);
       setOpen(true);
     }
   };
@@ -290,6 +292,26 @@ export default function WorkshopsTable({ workshopList, handleError, firebase }) 
   const updateWorkshop = () => {
     setIsLoading(true);
     //TODO: Update Workshop Function
+    var workshopRef = firebase.database().ref(`workshops/${selected[0]}`);
+    workshopRef
+      .update({ 
+        title: workshopEditFormInfo.title,
+        leader: workshopEditFormInfo.leader,
+        days: workshopEditFormInfo.days,
+        text: workshopEditFormInfo.text,
+        colors: workshopEditFormInfo.colors
+      })
+      .then(() => {
+        console.log("Workshop updated successfully.");
+        setIsLoading(false);
+        setOpen(false);
+        setSelected([]);
+      }).catch((error) => {
+        console.log(error);
+        setIsLoading(false);
+        setOpen(false);
+        handleError("Workshop(s) could not be updated. Please try again.");
+      });
   };
 
   const handleDelete = () => {
@@ -318,6 +340,10 @@ export default function WorkshopsTable({ workshopList, handleError, firebase }) 
   const signupRecord = (e) => {
     var updateVal = e.target.value;
     var updateKey = e.target.id;
+    setWorkshopEditFormInfo(prevFormInfo => ({
+      ...prevFormInfo,
+      [`${updateKey}`]: updateVal
+    }));
   };
 
   const updateStatus = (e) => {
@@ -408,6 +434,63 @@ export default function WorkshopsTable({ workshopList, handleError, firebase }) 
             ? `(${selected.length}) workshop(s) updating...`
             : `(${selected.length}) workshop(s) updated.`}
         </DialogTitle>
+        {workshopEditFormInfo?
+          <DialogContent className="edit-dialog-form">
+
+          <TextField
+            autoFocus
+            margin="dense"
+            id="title"
+            disabled={isLoading}
+            label="Title"
+            className="edit-title-from"
+            type="title"
+            onChange={signupRecord}
+            value={decodeURIComponent(workshopEditFormInfo.title)}
+            fullWidth
+          />
+          <TextField
+            autoFocus
+            margin="dense"
+            id="leader"
+            disabled={isLoading}
+            label="Leader"
+            className="edit-description-form"
+            onChange={signupRecord}
+            value={
+              workshopEditFormInfo.leader ? decodeURIComponent(workshopEditFormInfo.leader) : ""
+            }
+            style={{ marginRight: "20px" }}
+          />
+          {/* <TextField
+            autoFocus
+            margin="dense"
+            id="days"
+            disabled={isLoading}
+            label="Days"
+            className="edit-description-form"
+            onChange={signupRecord}
+            value={
+              workshopEditFormInfo.days ? decodeURIComponent(workshopEditFormInfo.days) : ""
+            }
+          /> */}
+          {/* <TextField
+            id="description"
+            label="Description"
+            multiline
+            className="edit-description-form"
+            disabled={isLoading}
+            rows={10}
+            fullWidth={true}
+            onChange={signupRecord}
+            variant="outlined"
+            value={
+              workshopEditFormInfo.text ? decodeURIComponent(workshopEditFormInfo.text) : ""
+            }
+          /> */}
+
+        </DialogContent>:null
+        }
         <DialogActions>
           <Button onClick={handleClose} disabled={isLoading} color="primary">
             Cancel
