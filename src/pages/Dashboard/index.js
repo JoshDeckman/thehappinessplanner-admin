@@ -11,7 +11,6 @@ import Button from "@material-ui/core/Button";
 
 import DashboardIcon from "@material-ui/icons/Dashboard";
 import CachedIcon from "@material-ui/icons/Cached";
-import DirectionsWalkIcon from "@material-ui/icons/DirectionsWalk";
 import FaceIcon from "@material-ui/icons/Face";
 import ExitToAppIcon from "@material-ui/icons/ExitToApp";
 
@@ -19,6 +18,7 @@ import WorkshopsTable from "../../components/WorkshopsTable";
 import UsersTable from "../../components/UsersTable";
 
 import HappinessLogo from "../../images/happiness-h-logo.png";
+import WorkshopLogo from "../../images/laptop-w.svg";
 
 import "../../styles/dashboard.scss";
 
@@ -162,7 +162,7 @@ export default function Dashboard({ firebase, exitApp, handleError }) {
       <CssBaseline />
       <Drawer variant="permanent">
         <div className="logo-icon">
-          <img src={HappinessLogo} alt="The Happiness Planner Logo" />
+          <img src={HappinessLogo} alt="The Happiness Planner Logo" width="25" height="25" />
         </div>
         <List>
           <ListItem
@@ -186,7 +186,7 @@ export default function Dashboard({ firebase, exitApp, handleError }) {
             }`}
           >
             <ListItemIcon>
-              <DirectionsWalkIcon />
+              <img src={WorkshopLogo} alt="Workshop Logo" />
             </ListItemIcon>
           </ListItem>
           <ListItem
