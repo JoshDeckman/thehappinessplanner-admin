@@ -65,6 +65,7 @@ function stableSort(array, comparator) {
 }
 
 const headCells = [
+  // { id: "id", numeric: false, disablePadding: false, label: "id" },
   { id: "title", numeric: false, disablePadding: false, label: "Title" },
   { id: "leader", numeric: false, disablePadding: false, label: "leader" },
   { id: "url", numeric: false, disablePadding: false, label: "URL" },
@@ -245,7 +246,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export default function WorkshopsTable({ workshopList }) {
+export default function WorkshopsTable({ workshopList, handleError, firebase }) {
   const classes = useStyles();
   const [order, setOrder] = React.useState("asc");
   const [orderBy, setOrderBy] = React.useState("calories"); // calories??
@@ -284,12 +285,12 @@ export default function WorkshopsTable({ workshopList }) {
     setSelected([]);
   };
 
-  const handleClick = (event, name) => {
-    const selectedIndex = selected.indexOf(name);
+  const handleClick = (event, id) => {
+    const selectedIndex = selected.indexOf(id);
     let newSelected = [];
 
     if (selectedIndex === -1) {
-      newSelected = newSelected.concat(selected, name);
+      newSelected = newSelected.concat(selected, id);
     } else if (selectedIndex === 0) {
       newSelected = newSelected.concat(selected.slice(1));
     } else if (selectedIndex === selected.length - 1) {
@@ -313,7 +314,7 @@ export default function WorkshopsTable({ workshopList }) {
     setPage(0);
   };
 
-  const isSelected = (name) => selected.indexOf(name) !== -1;
+  const isSelected = (id) => selected.indexOf(id) !== -1;
 
   const updateWorkshop = () => {
     setIsLoading(true);
@@ -322,7 +323,25 @@ export default function WorkshopsTable({ workshopList }) {
 
   const handleDelete = () => {
     setIsLoading(true);
-    //TODO: Handle Workshop Delete
+    const deleteWorkshopPromises = [];
+
+    selected.forEach(workshopKey => {
+      var workshopRef = firebase.database().ref(`workshops/${workshopKey}`);
+      deleteWorkshopPromises.push(workshopRef.update({ removed: "true" }));
+    });
+
+    Promise.all(deleteWorkshopPromises)
+      .then(() => {
+        console.log("Workshop updated successfully.");
+        setIsLoading(false);
+        setConfirmOpen(false);
+        setSelected([]);
+      }).catch((error) => {
+        console.log(error);
+        handleError("Workshop(s) could not be updated. Please try again.");
+        setIsLoading(false);
+        setConfirmOpen(false);
+      });
   };
 
   const signupRecord = (e) => {
@@ -390,8 +409,8 @@ export default function WorkshopsTable({ workshopList }) {
       >
         <DialogTitle id="form-dialog-title">
           {isLoading
-            ? `(${selected.length}) workshops being deleted...`
-            : `(${selected.length}) workshops deleted.`}
+            ? `(${selected.length}) workshop(s) being deleted...`
+            : `(${selected.length}) workshop(s) to be deleted.`}
         </DialogTitle>
         <DialogActions>
           <Button
@@ -415,8 +434,8 @@ export default function WorkshopsTable({ workshopList }) {
       >
         <DialogTitle id="form-dialog-title">
           {isLoading
-            ? `(${selected.length}) workshops updating...`
-            : `(${selected.length}) workshops updated.`}
+            ? `(${selected.length}) workshop(s) updating...`
+            : `(${selected.length}) workshop(s) updated.`}
         </DialogTitle>
         <DialogActions>
           <Button onClick={handleClose} disabled={isLoading} color="primary">
@@ -455,17 +474,17 @@ export default function WorkshopsTable({ workshopList }) {
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                 .map((row, index) => {
 
-                  const isItemSelected = isSelected(row.url);
+                  const isItemSelected = isSelected(row.id);
                   const labelId = `enhanced-table-checkbox-${index}`;
 
                   return (
                     <TableRow
                       hover
-                      onClick={(event) => handleClick(event, row.url)}
+                      onClick={(event) => handleClick(event, row.id)}
                       role="checkbox"
                       aria-checked={isItemSelected}
                       tabIndex={-1}
-                      key={row.url}
+                      key={row.id}
                       selected={isItemSelected}
                     >
                       <TableCell padding="checkbox">

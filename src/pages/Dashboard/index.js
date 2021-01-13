@@ -93,6 +93,7 @@ export default function Dashboard({ firebase, exitApp, handleError }) {
 
               if (workshopURLs && workshopURLs.length > 0) {
                 workshopList.forEach((event, index) => {
+                  event.id = workshopKeys[index];
                   event.shortInfo = truncate(event.text);
                   event.imageURL = workshopURLs[index];
                 });
@@ -275,7 +276,7 @@ export default function Dashboard({ firebase, exitApp, handleError }) {
             ) : location === "workshops" ? (
               <>
                 <div className="table-holder">
-                  <WorkshopsTable workshopList={workshopList} />
+                  <WorkshopsTable workshopList={workshopList} handleError={handleError} firebase={firebase} />
                 </div>
               </>
             ) : null}
