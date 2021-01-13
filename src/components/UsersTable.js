@@ -55,12 +55,8 @@ function stableSort(array, comparator) {
 };
 
 const headCells = [
-  { id: 'firstName', numeric: false, disablePadding: true, label: '名' },
-  { id: 'lastName', numeric: true, disablePadding: false, label: '姓' },
-  { id: 'email', numeric: false, disablePadding: false, label: 'Eメール' },
-  { id: 'phoneNumber', numeric: true, disablePadding: false, label: '電話番号' },
-  { id: 'address', numeric: true, disablePadding: false, label: '住所' },
-  { id: 'tours', numeric: true, disablePadding: false, label: 'ツアー' },
+  { id: 'id', numeric: false, disablePadding: true, label: 'User ID' },
+  { id: 'access-level', numeric: false, disablePadding: true, label: 'Access Level' },
 ];
 
 function EnhancedTableHead(props) {
@@ -149,13 +145,13 @@ const EnhancedTableToolbar = (props) => {
     >
       {numSelected > 0 ? (
         <Typography className={classes.title} color="inherit" variant="subtitle1" component="div">
-          ({numSelected})Users Selected
+          ({numSelected}) Users Selected
         </Typography>
       ) : (null
       )}
 
       {numSelected > 0 ? (
-        <Tooltip title="削除">
+        <Tooltip title="Delete">
           <IconButton aria-label="delete" onClick={props.askToDelete}>
             <DeleteIcon />
           </IconButton>
@@ -195,7 +191,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export default function ToursTable(props) {
+export default function UsersTable({ userList }) {
   const classes = useStyles();
   const [order, setOrder] = React.useState('asc');
   const [orderBy, setOrderBy] = React.useState('calories');
@@ -214,7 +210,7 @@ export default function ToursTable(props) {
 
   const handleSelectAllClick = (event) => {
     if (event.target.checked) {
-      const newSelecteds = props.userList.map((n) => n.id);
+      const newSelecteds = userList.map((n) => n.id);
       setSelected(newSelecteds);
       return;
     }
@@ -298,10 +294,10 @@ export default function ToursTable(props) {
               orderBy={orderBy}
               onSelectAllClick={handleSelectAllClick}
               onRequestSort={handleRequestSort}
-              rowCount={props.userList.length}
+              rowCount={userList.length}
             />
             <TableBody>
-              {stableSort(props.userList, getComparator(order, orderBy))
+              {stableSort(userList, getComparator(order, orderBy))
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                 .map((row, index) => {
                   const isItemSelected = isSelected(row.id);
@@ -323,17 +319,8 @@ export default function ToursTable(props) {
                           inputProps={{ 'aria-labelledby': labelId }}
                         />
                       </TableCell>
-                      <TableCell component="th" align="left">{row.firstName}</TableCell>
-                      <TableCell align="left">{row.lastName}</TableCell>
-                      <TableCell align="left">{row.email}</TableCell>
-                      <TableCell align="left">{row.phoneNumber}</TableCell>
-                      <TableCell align="left">{`
-                        ${row.address && row.address.postal? row.address.postal:""}
-                        ${row.address && row.address.prefecture? row.address.prefecture:""}
-                        ${row.address && row.address.city? row.address.city:""}
-                        ${row.address && row.address.address? row.address.address:""}`}
-                      </TableCell>
-                      <TableCell align="left">{row.place.length}</TableCell>
+                      <TableCell component="th" align="left">{row.id}</TableCell>
+                      <TableCell align="left">{row.accessLevel}</TableCell>
                     </TableRow>
                   );
                 })}
@@ -344,7 +331,7 @@ export default function ToursTable(props) {
         <TablePagination
           rowsPerPageOptions={[25, 50, 100]}
           component="div"
-          count={props.userList.length}
+          count={userList.length}
           rowsPerPage={rowsPerPage}
           page={page}
           onChangePage={handleChangePage}

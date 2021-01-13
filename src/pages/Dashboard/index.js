@@ -69,12 +69,12 @@ export default function Dashboard({ firebase, exitApp, handleError }) {
 
   const [location, setLocation] = React.useState("dashboard");
   const [isLoading, setIsLoading] = useState(true);
-  const [userList, setUserList] = React.useState([]);
+  const [userList, setUserList] = React.useState(null);
   const [workshopList, setWorkshopList] = React.useState(null);
 
   useEffect(() => {
     getWorkshopData();
-    // getUserData();
+    getUserData();
   }, []);
 
   const getWorkshopData = () => {
@@ -133,7 +133,17 @@ export default function Dashboard({ firebase, exitApp, handleError }) {
         if (snapshot.val() != null) {
           const accessLevelData = snapshot.val();
           
-          console.log("Access Level Data", accessLevelData);
+          const accessLevelUserIds = Object.keys(accessLevelData);
+
+          let adminUserList = [];
+
+          accessLevelUserIds.forEach(userId => {
+            if (accessLevelData[userId].admin) {
+              adminUserList.push({ id: userId, accessLevel: "admin" });
+            }
+          });
+
+          setUserList(adminUserList);
         }
       });
   };
@@ -269,16 +279,13 @@ export default function Dashboard({ firebase, exitApp, handleError }) {
             ) : location === "users" ? (
               <>
                 <div className="table-holder">
-                  {/* <UsersTable userList={userList} queryData={queryData} /> */}
+                  <UsersTable userList={userList} />
                 </div>
               </>
             ) : location === "workshops" ? (
               <>
                 <div className="table-holder">
-                  <WorkshopsTable
-                    workshopList={workshopList}
-                    queryData={getWorkshopData}
-                  />
+                  <WorkshopsTable workshopList={workshopList} />
                 </div>
               </>
             ) : null}

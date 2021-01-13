@@ -372,7 +372,6 @@ export default function WorkshopsTable({ workshopList }) {
       colorStr += "Workshop Info: " + colors.info;
     }
 
-    console.log(colorStr);
     return colorStr;
   };
 
