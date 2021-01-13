@@ -82,7 +82,7 @@ export default function Dashboard({ firebase, exitApp, handleError }) {
     firebase.database().ref(`/workshops/`)
       .orderByChild("removed")
       .equalTo("false")
-      .once("value", (snapshot) => {
+      .on("value", (snapshot) => {
         if (snapshot.val() != null) {
           const workshopData = snapshot.val();
           const workshopKeys = Object.keys(workshopData);
@@ -129,7 +129,7 @@ export default function Dashboard({ firebase, exitApp, handleError }) {
   const getUserData = () => {
     console.log("Fetching User data...");
     firebase.database().ref(`/access-level/`)
-      .once("value", (snapshot) => {
+      .on("value", (snapshot) => {
         if (snapshot.val() != null) {
           const accessLevelData = snapshot.val();
           
@@ -162,7 +162,7 @@ export default function Dashboard({ firebase, exitApp, handleError }) {
       <CssBaseline />
       <Drawer variant="permanent">
         <div className="logo-icon">
-          <img src={HappinessLogo} alt="The Happiness Planner Logo" width="25" height="25" />
+          <img src={HappinessLogo} alt="The Happiness Planner Logo" />
         </div>
         <List>
           <ListItem
@@ -186,7 +186,7 @@ export default function Dashboard({ firebase, exitApp, handleError }) {
             }`}
           >
             <ListItemIcon>
-              <img src={WorkshopLogo} alt="Workshop Logo" />
+              <img src={WorkshopLogo} alt="Workshop Logo" width="25" height="25"/>
             </ListItemIcon>
           </ListItem>
           <ListItem
@@ -236,16 +236,6 @@ export default function Dashboard({ firebase, exitApp, handleError }) {
               : null}
           </h2>
           <div className="page-actions">
-            <Button
-              variant="contained"
-              color="primary"
-              className="thp-button"
-              onClick={() => { getWorkshopData(); getUserData(); }}
-              disabled={isLoading ? true : false}
-              startIcon={<CachedIcon />}
-            >
-              Refresh
-            </Button>
           </div>
         </div>
 
