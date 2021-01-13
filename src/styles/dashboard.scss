@@ -1,0 +1,140 @@
+.logo-icon {
+    float: left;
+    width: 100%;
+    padding-top: 20px;
+    margin-bottom: 10px;
+    img {
+      display: block;
+      margin: auto;
+      width: 100%;
+      max-width: 40px;
+    }
+  }
+  .page-header {
+    float: left;
+    width: 100%;
+    padding: 25px;
+    background-color: #fceeff;
+    border-bottom: 2px solid #9ad2d1;
+    &.dashboard {
+      background-color: #f8aec4;
+      border-bottom: 2px solid #9ad2d1;
+      h2 {
+        color: #fceeff;
+      }
+    }
+    &.users {
+      border-bottom: 2px solid #f8aec4;
+      background-color: #d8f8ff;
+      h2 {
+        color: #000;
+      }
+    }
+    h2 {
+      float: left;
+    }
+    .page-actions {
+      float: right;
+    }
+  }
+  .list-icon > div{
+    min-width: initial;
+    padding: 10px;
+  }
+  div.edit-workshop-dialog > div > div:first-child {
+    min-width: 500px;
+  }
+  div.selected-menu {
+    background-color: #9ad2d1;
+    &.users {
+      background-color: #f8aec4;
+      &:hover {
+        background-color: #f8aec4;
+        svg {
+          color: #fff;
+        }
+      }
+    }
+    &:hover {
+      background-color: #9ad2d1;
+      svg {
+        color: #fff;
+      }
+    }
+    svg {
+      color: #fff;
+    }
+  }
+  .loading-container {
+    float: left;
+    padding: 10px 25px;
+  }
+  .dash-data {
+    float: left;
+    width: 100%;
+    padding: 20px;
+  }
+  button.count-icon {
+    min-width: 200px;
+    float: left;
+    margin: 10px;
+    padding: 20px;
+    display: block;
+    h3 {
+      font-weight: 900;
+      text-align: center;
+      float: left;
+      margin-bottom: 10px;
+      width: 100%;
+      float: left;
+      width: 100%;
+    }
+    h1 {
+      text-align: center;
+      font-size: 50px;
+      float: left;
+      width: 100%;
+    }
+    &.workshops {
+      border: 5px solid #f8aec4;
+      h1,h3 {
+        color: #f8aec4;
+      }
+      &:hover {
+        background-color: #f8aec4;
+        h1,h3 {
+          color: #fff;
+        }
+      }
+    }
+  }
+  .table-holder {
+    padding: 20px;
+    float: left;
+    width: 100%;
+  }
+  .edit-dialog-form {
+    .edit-title-from {
+      margin-bottom: 20px;
+    }
+    .edit-description-form {
+      margin-bottom: 20px;
+    }
+    .edit-status-from {
+      margin-bottom: 20px;
+    }
+  }
+  .status-dropdown {
+    min-width: 150px;
+  }
+  th.table-header-text {
+    font-size: 12px;
+    white-space: nowrap;
+  }
+  
+  
+  
+  
+  
+  
+  
