@@ -190,17 +190,22 @@ const EnhancedTableToolbar = (props) => {
           variant="subtitle1"
           component="div"
         >
-          ({numSelected}) Workshop Selected
+          ({numSelected}) Workshop(s) Selected
         </Typography>
       ) : null}
 
-      {numSelected > 0 ? (
+      {numSelected === 1? (
         <>
           <Tooltip title="Edit">
             <IconButton aria-label="edit" onClick={props.handleClickOpen}>
               <EditIcon />
             </IconButton>
           </Tooltip>
+        </>
+      ) : null}
+
+      {numSelected > 0 ? (
+        <>
           <Tooltip title="Delete">
             <IconButton aria-label="delete" onClick={props.askToDelete}>
               <DeleteIcon />
