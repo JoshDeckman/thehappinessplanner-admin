@@ -10,12 +10,12 @@ import CircularProgress from "@material-ui/core/CircularProgress";
 import Button from "@material-ui/core/Button";
 
 import DashboardIcon from "@material-ui/icons/Dashboard";
-import CachedIcon from "@material-ui/icons/Cached";
-import FaceIcon from "@material-ui/icons/Face";
+// import CachedIcon from "@material-ui/icons/Cached";
+// import FaceIcon from "@material-ui/icons/Face";
 import ExitToAppIcon from "@material-ui/icons/ExitToApp";
 
 import WorkshopsTable from "../../components/WorkshopsTable";
-import UsersTable from "../../components/UsersTable";
+// import UsersTable from "../../components/UsersTable";
 
 import HappinessLogo from "../../images/happiness-h-logo.png";
 import WorkshopLogo from "../../images/laptop-w.svg";
@@ -69,12 +69,12 @@ export default function Dashboard({ firebase, exitApp, handleError }) {
 
   const [location, setLocation] = React.useState("dashboard");
   const [isLoading, setIsLoading] = useState(true);
-  const [userList, setUserList] = React.useState(null);
+  // const [userList, setUserList] = React.useState(null);
   const [workshopList, setWorkshopList] = React.useState(null);
 
   useEffect(() => {
     getWorkshopData();
-    getUserData();
+    // getUserData();
   }, []);
 
   const getWorkshopData = () => {
@@ -127,27 +127,27 @@ export default function Dashboard({ firebase, exitApp, handleError }) {
     return workshopURLs;
   };
 
-  const getUserData = () => {
-    console.log("Fetching User data...");
-    firebase.database().ref(`/access-level/`)
-      .on("value", (snapshot) => {
-        if (snapshot.val() != null) {
-          const accessLevelData = snapshot.val();
+  // const getUserData = () => {
+  //   console.log("Fetching User data...");
+  //   firebase.database().ref(`/access-level/`)
+  //     .on("value", (snapshot) => {
+  //       if (snapshot.val() != null) {
+  //         const accessLevelData = snapshot.val();
           
-          const accessLevelUserIds = Object.keys(accessLevelData);
+  //         const accessLevelUserIds = Object.keys(accessLevelData);
 
-          let adminUserList = [];
+  //         let adminUserList = [];
 
-          accessLevelUserIds.forEach(userId => {
-            if (accessLevelData[userId].admin) {
-              adminUserList.push({ id: userId, accessLevel: "admin" });
-            }
-          });
+  //         accessLevelUserIds.forEach(userId => {
+  //           if (accessLevelData[userId].admin) {
+  //             adminUserList.push({ id: userId, accessLevel: "admin" });
+  //           }
+  //         });
 
-          setUserList(adminUserList);
-        }
-      });
-  };
+  //         setUserList(adminUserList);
+  //       }
+  //     });
+  // };
 
   const handlePageChange = (location) => {
     setLocation(location);
@@ -190,7 +190,7 @@ export default function Dashboard({ firebase, exitApp, handleError }) {
               <img src={WorkshopLogo} alt="Workshop Logo" width="25" height="25"/>
             </ListItemIcon>
           </ListItem>
-          <ListItem
+          {/* <ListItem
             button
             key={"users-i"}
             onClick={() => handlePageChange("users")}
@@ -201,7 +201,7 @@ export default function Dashboard({ firebase, exitApp, handleError }) {
             <ListItemIcon>
               <FaceIcon />
             </ListItemIcon>
-          </ListItem>
+          </ListItem> */}
           <ListItem
             button
             onClick={exitApp}
@@ -258,20 +258,20 @@ export default function Dashboard({ firebase, exitApp, handleError }) {
                     <h1>{numberWithCommas(workshopList.length)}</h1>
                     <h3>Workshops</h3>
                   </Button>
-                  <Button
+                  {/* <Button
                     className="count-icon users"
                     onClick={() => handlePageChange("users")}
                   >
                     <h1>{numberWithCommas(userList.length)}</h1>
                     <h3>All Users</h3>
-                  </Button>
+                  </Button> */}
                 </div>
               </>
             ) : location === "users" ? (
               <>
-                <div className="table-holder">
+                {/* <div className="table-holder">
                   <UsersTable userList={userList} />
-                </div>
+                </div> */}
               </>
             ) : location === "workshops" ? (
               <>

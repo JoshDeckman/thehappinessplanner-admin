@@ -18,16 +18,10 @@ import Paper from "@material-ui/core/Paper";
 import Checkbox from "@material-ui/core/Checkbox";
 import IconButton from "@material-ui/core/IconButton";
 import Tooltip from "@material-ui/core/Tooltip";
-import InputLabel from "@material-ui/core/InputLabel";
-import FormControl from "@material-ui/core/FormControl";
 import Button from "@material-ui/core/Button";
-import TextField from "@material-ui/core/TextField";
 import Dialog from "@material-ui/core/Dialog";
 import DialogActions from "@material-ui/core/DialogActions";
-import DialogContent from "@material-ui/core/DialogContent";
 import DialogTitle from "@material-ui/core/DialogTitle";
-import MenuItem from "@material-ui/core/MenuItem";
-import Select from "@material-ui/core/Select";
 
 import DeleteIcon from "@material-ui/icons/Delete";
 import EditIcon from "@material-ui/icons/Edit";
@@ -42,10 +36,6 @@ function descendingComparator(a, b, orderBy) {
     return 1;
   }
   return 0;
-}
-
-function numberWithCommas(x) {
-  return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
 function getComparator(order, orderBy) {
@@ -65,32 +55,13 @@ function stableSort(array, comparator) {
 }
 
 const headCells = [
-  // { id: "id", numeric: false, disablePadding: false, label: "id" },
   { id: "title", numeric: false, disablePadding: false, label: "Title" },
   { id: "leader", numeric: false, disablePadding: false, label: "leader" },
   { id: "url", numeric: false, disablePadding: false, label: "URL" },
   { id: "days", numeric: false, disablePadding: false, label: "Days" },
   { id: "text", numeric: false, disablePadding: false, label: "Text" },
   { id: "colors", numeric: false, disablePadding: false, label: "Colors" },
-  // { id: "moreinfo", numeric: false, disablePadding: false, label: "More Info" },
-  // { id: "videos", numeric: false, disablePadding: false, label: "Videos" },
 ];
-
-const toASCII = (chars) => {
-  var ascii = "";
-  for (var i = 0, l = chars.length; i < l; i++) {
-    var c = chars[i].charCodeAt(0);
-
-    // make sure we only convert half-full width char
-    if (c >= 0xff00 && c <= 0xffef) {
-      c = 0xff & (c + 0x20);
-    }
-
-    ascii += String.fromCharCode(c);
-  }
-
-  return ascii;
-};
 
 function EnhancedTableHead(props) {
   const {
@@ -249,7 +220,7 @@ const useStyles = makeStyles((theme) => ({
 export default function WorkshopsTable({ workshopList, handleError, firebase }) {
   const classes = useStyles();
   const [order, setOrder] = React.useState("asc");
-  const [orderBy, setOrderBy] = React.useState("calories"); // calories??
+  const [orderBy, setOrderBy] = React.useState("");
   const [selected, setSelected] = React.useState([]);
   const [page, setPage] = React.useState(0);
   const [dense] = React.useState(false);

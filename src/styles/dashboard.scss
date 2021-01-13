@@ -95,25 +95,13 @@
       float: left;
       width: 100%;
     }
-    &.users {
+    &.workshops {
       border: 5px solid #f8aec4;
       h1,h3 {
         color: #f8aec4;
       }
       &:hover {
         background-color: #f8aec4;
-        h1,h3 {
-          color: #fff;
-        }
-      }
-    }
-    &.guides {
-      border: 5px solid #ff39e7;
-      h1,h3 {
-        color: #ff39e7;
-      }
-      &:hover {
-        background-color: #ff39e7;
         h1,h3 {
           color: #fff;
         }
