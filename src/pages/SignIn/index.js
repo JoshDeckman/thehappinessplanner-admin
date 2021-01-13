@@ -104,7 +104,7 @@ export default function SignIn({ firebase, updateAuth, handleError }) {
                 fullWidth
                 id="email"
                 onChange={handleChangeEmail}
-                label="Eメール"
+                label="Email"
                 name="email"
                 autoFocus
               />
@@ -115,7 +115,7 @@ export default function SignIn({ firebase, updateAuth, handleError }) {
                 fullWidth
                 onChange={handleChangePass}
                 name="password"
-                label="パスワード"
+                label="Password"
                 type="password"
                 id="password"
               />

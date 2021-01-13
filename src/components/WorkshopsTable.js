@@ -1,7 +1,5 @@
 import React from "react";
-
 import PropTypes from "prop-types";
-
 import clsx from "clsx";
 
 import { lighten, makeStyles } from "@material-ui/core/styles";
@@ -33,6 +31,8 @@ import Select from "@material-ui/core/Select";
 
 import DeleteIcon from "@material-ui/icons/Delete";
 import EditIcon from "@material-ui/icons/Edit";
+
+const ReactMarkdown = require('react-markdown/with-html');
 
 function descendingComparator(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
@@ -71,8 +71,8 @@ const headCells = [
   { id: "days", numeric: false, disablePadding: false, label: "Days" },
   { id: "text", numeric: false, disablePadding: false, label: "Text" },
   { id: "colors", numeric: false, disablePadding: false, label: "Colors" },
-  { id: "moreinfo", numeric: false, disablePadding: false, label: "More Info" },
-  { id: "videos", numeric: false, disablePadding: false, label: "Videos" },
+  // { id: "moreinfo", numeric: false, disablePadding: false, label: "More Info" },
+  // { id: "videos", numeric: false, disablePadding: false, label: "Videos" },
 ];
 
 const toASCII = (chars) => {
@@ -190,7 +190,7 @@ const EnhancedTableToolbar = (props) => {
           variant="subtitle1"
           component="div"
         >
-          ({numSelected})Workshop
+          ({numSelected}) Workshop Selected
         </Typography>
       ) : null}
 
@@ -337,6 +337,45 @@ export default function WorkshopsTable({ workshopList }) {
     setConfirmOpen(false);
   };
 
+  const parseMarkdown = markdownText => {
+    return (
+      <ReactMarkdown 
+        source={markdownText}
+        escapeHTML={false}
+      />
+    );
+  };
+
+  const parseDays = days => {
+    let dateStr = "";
+    days.forEach((day, index) => {
+      let convertedLocalDate = new Date(day.date);
+      let parsedLocalDate = convertedLocalDate.toDateString() + " @ " + convertedLocalDate.toLocaleTimeString();
+
+      if (index > 0) {
+        dateStr += `, ${parsedLocalDate}`;
+      } else {
+        dateStr += parsedLocalDate;
+      }
+    });
+
+    return dateStr;
+  };
+
+  const parseColors = (colors) => {
+    let colorStr = "";
+
+    if (colors) {
+      colorStr += "Background: " + colors.background + ", ";
+      colorStr += "Photo Shadow: " + colors.boxShadow + ", ";
+      colorStr += "Photo Flag: " + colors.flag + ", ";
+      colorStr += "Workshop Info: " + colors.info;
+    }
+
+    console.log(colorStr);
+    return colorStr;
+  };
+
   return (
     <div className={classes.root}>
       <Dialog
@@ -436,11 +475,10 @@ export default function WorkshopsTable({ workshopList }) {
                       </TableCell>
                       <TableCell align="left">{row.leader}</TableCell>
                       <TableCell align="left"> {row.url}</TableCell>
-                      {/* <TableCell align="left">{row.days}</TableCell> */}
-                      {/* <TableCell align="left">{row.text}</TableCell> */}
-                      {/* <TableCell align="left">{row.colors}</TableCell> */}
+                      <TableCell align="left">{parseDays(row.days)}</TableCell>
+                      <TableCell align="left">{parseMarkdown(row.text)}</TableCell>
+                      <TableCell align="left">{parseColors(row.colors)}</TableCell>
                       {/* <TableCell align="left">{row.videos}</TableCell> */}
-                      {/* <TableCell align="left">{row.moreInfo}</TableCell> */}
                     </TableRow>
                   );
                 })}
