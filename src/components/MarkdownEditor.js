@@ -4,7 +4,6 @@ import * as Showdown from "showdown";
 
 import "../styles/mde.scss";
 import "react-mde/lib/styles/css/react-mde-all.css";
-import { ImageRounded } from "@material-ui/icons";
 
 const converter = new Showdown.Converter({
   tables: true,

@@ -75,6 +75,7 @@ export default function Dashboard({ firebase, exitApp, handleError }) {
   useEffect(() => {
     getWorkshopData();
     // getUserData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const getWorkshopData = () => {
@@ -112,6 +113,7 @@ export default function Dashboard({ firebase, exitApp, handleError }) {
         }
       });
   };
+
 
   const getWorkshopPhotos = async (workshopKeys, workshopList) => {
     const workshopURLPromises = [];

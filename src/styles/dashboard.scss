@@ -116,8 +116,13 @@
   .edit-dialog-form {
     .input-table {
       margin-bottom: 10px;
-      > div:nth-child(odd) {
+      .edit-leader {
         margin-right: 20px;
+      }
+      .datetime-field-container, .color-field-container {
+        > div:nth-child(odd) {
+          margin-right: 20px;
+        }
       }
       .input-cell {
         text-align: center;

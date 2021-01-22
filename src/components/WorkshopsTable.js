@@ -29,8 +29,10 @@ import AddIcon from '@material-ui/icons/Add';
 import DeleteIcon from "@material-ui/icons/Delete";
 import EditIcon from "@material-ui/icons/Edit";
 
-import "../styles/workshops.scss";
 import MarkdownEditor from "./MarkdownEditor";
+import ColorPicker from 'material-ui-color-picker';
+
+import "../styles/workshops.scss";
 
 const ReactMarkdown = require('react-markdown/with-html');
 
@@ -365,7 +367,6 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
     console.log("Form Info", workshopEditFormInfo);
     const newDateTime = e.target.value;
     const date = new Date(newDateTime).toGMTString() + "+1";
-    const fbIndex = workshopEditFormInfo.days.length;
 
     setWorkshopEditFormInfo(prevFormInfo => ({
       ...prevFormInfo,
@@ -378,17 +379,18 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
         ...prevFormInfo.days.slice(arrIndex + 1)
       ]
     }));
+  };
 
-    // setWorkshopEditFormInfo(prevFormInfo => ({
-    //   ...prevFormInfo,
-    //   days: [
-    //     ...prevFormInfo.days,
-    //     {
-    //       date,
-    //       index
-    //     }
-    //   ]
-    // }));
+  const updateColor = (newColor, colorKey) => {
+    if (newColor) {
+      setWorkshopEditFormInfo(prevFormInfo => ({
+        ...prevFormInfo,
+        colors: {
+          ...prevFormInfo.colors,
+          [colorKey]: newColor
+        }
+      }));
+    }
   };
 
   const askToDelete = () => {
@@ -465,6 +467,8 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
     }));
   };
 
+  console.log(workshopEditFormInfo && workshopEditFormInfo.colors);
+
   return (
     <div className={classes.root}>
       <Dialog
@@ -524,7 +528,7 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
                 id="leader"
                 disabled={isLoading}
                 label="Leader"
-                className="edit-description input-cell"
+                className="edit-leader input-cell"
                 onChange={workshopRecord}
                 value={
                   workshopEditFormInfo.leader
@@ -546,23 +550,41 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
                     : ""
                 }
               />
-              {workshopEditFormInfo.days.map((day, index) => (
-                <TextField
-                  key={index}
-                  id="days"
-                  label="days"
-                  type="datetime-local"
-                  defaultValue={parseDateString(day.date)}
-                  className="edit-days input-cell"
-                  onChange={(e) => updateDateTime(e, day, index)}
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                />
-              ))}
-              <div className="input-cell add-more" onClick={addWorkshopDateTime}>
+              <div className="datetime-field-container">
+                {workshopEditFormInfo.days.map((day, index) => (
+                  <TextField
+                    key={`datetime-${index}`}
+                    id="days"
+                    label="days"
+                    type="datetime-local"
+                    defaultValue={parseDateString(day.date)}
+                    className="edit-days input-cell"
+                    onChange={(e) => updateDateTime(e, day, index)}
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                  />
+                ))}
+              </div>
+              <div
+                className="input-cell add-more"
+                onClick={addWorkshopDateTime}
+                >
                 <AddIcon />
                 <Typography>Add More</Typography>
+              </div>
+              <div className="color-field-container">
+                {workshopEditFormInfo.colors && Object.keys(workshopEditFormInfo.colors).map((colorKey, index) => (
+                  <ColorPicker
+                    key={`color-${index}`}
+                    name="color"
+                    label={colorKey}
+                    className="input-cell"
+                    value={`${workshopEditFormInfo.colors[colorKey]}`}
+                    onChange={(color) => updateColor(color, colorKey)}
+                    InputProps={{ value: `${workshopEditFormInfo.colors[colorKey]}` }}
+                  />
+                ))}
               </div>
             </div>
             <MarkdownEditor
