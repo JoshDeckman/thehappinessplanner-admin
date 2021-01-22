@@ -38,6 +38,8 @@ import "../styles/workshops.scss";
 
 const ReactMarkdown = require('react-markdown/with-html');
 
+const workshopColorKeys = ["background", "boxShadow", "flag", "info"];
+
 function descendingComparator(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
     return -1;
@@ -227,7 +229,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export default function WorkshopsTable({ workshopList, handleError, firebase, truncate }) {
+export default function WorkshopsTable({ workshopList, handleError, firebase, truncate, addWorkshopOpen, setAddWorkshopOpen }) {
   const classes = useStyles();
   const [order, setOrder] = React.useState("asc");
   const [orderBy, setOrderBy] = React.useState("");
@@ -236,21 +238,27 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
   const [dense] = React.useState(false);
   const [rowsPerPage, setRowsPerPage] = React.useState(25);
   const [isLoading, setIsLoading] = React.useState(false);
-  const [open, setOpen] = React.useState(false);
+  const [editWorkshopOpen, setEditWorkshopOpen] = React.useState(false);
   const [confirmOpen, setConfirmOpen] = React.useState(false);
-  const [workshopEditFormInfo, setWorkshopEditFormInfo] = React.useState(null);
+  const [workshopFormInfo, setWorkshopFormInfo] = React.useState({});
 
   const handleClickOpen = () => {
     if (selected.length === 1) {
       var findSelected = workshopList.find((workshop) => workshop.id === selected[0]);
       console.log("Selected", findSelected);
-      setWorkshopEditFormInfo(findSelected);
-      setOpen(true);
+      setWorkshopFormInfo(findSelected);
+      setEditWorkshopOpen(true);
     }
   };
 
   const handleClose = () => {
-    setOpen(false);
+    if (addWorkshopOpen) {
+      setAddWorkshopOpen(false);
+      setWorkshopFormInfo({});
+    } else {
+      setEditWorkshopOpen(false);
+      setWorkshopFormInfo({});      
+    }
   };
 
   const handleRequestSort = (event, property) => {
@@ -305,23 +313,30 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
     var workshopRef = firebase.database().ref(`workshops/${selected[0]}`);
     workshopRef
       .update({ 
-        title: workshopEditFormInfo.title,
-        leader: workshopEditFormInfo.leader,
-        days: workshopEditFormInfo.days,
-        text: workshopEditFormInfo.text,
-        colors: workshopEditFormInfo.colors
+        title: workshopFormInfo.title,
+        leader: workshopFormInfo.leader,
+        days: workshopFormInfo.days,
+        text: workshopFormInfo.text,
+        colors: workshopFormInfo.colors
       })
       .then(() => {
         console.log("Workshop updated successfully.");
         setIsLoading(false);
-        setOpen(false);
+        setEditWorkshopOpen(false);
         setSelected([]);
+        setWorkshopFormInfo({});
       }).catch((error) => {
         console.log(error);
         setIsLoading(false);
-        setOpen(false);
+        setEditWorkshopOpen(false);
         handleError("Workshop(s) could not be updated. Please try again.");
+        setWorkshopFormInfo({});
       });
+  };
+
+  const addWorkshop = () => {
+    console.log("workshopFormInfo", workshopFormInfo);
+    setWorkshopFormInfo({});
   };
 
   const handleDelete = () => {
@@ -351,14 +366,14 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
     var updateVal = e.target.value;
     var updateKey = e.target.id;
 
-    setWorkshopEditFormInfo(prevFormInfo => ({
+    setWorkshopFormInfo(prevFormInfo => ({
       ...prevFormInfo,
       [`${updateKey}`]: updateVal
     }));
   };
 
   const updateDescription = (text) => {
-    setWorkshopEditFormInfo(prevFormInfo => ({
+    setWorkshopFormInfo(prevFormInfo => ({
       ...prevFormInfo,
       text
     }));
@@ -366,28 +381,40 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
 
   const updateDateTime = (e, day, arrIndex) => {
     console.log("Incoming Date", e.target.value);
-    console.log("Form Info", workshopEditFormInfo);
+    console.log("Form Info", workshopFormInfo);
     const newDateTime = e.target.value;
     const date = new Date(newDateTime).toGMTString() + "+1";
 
-    setWorkshopEditFormInfo(prevFormInfo => ({
-      ...prevFormInfo,
-      days: [
-        ...prevFormInfo.days.slice(0, arrIndex),
-        {
-          date,
-          index: day.index
-        },
-        ...prevFormInfo.days.slice(arrIndex + 1)
-      ]
-    }));
+    if (workshopFormInfo.days) {
+      setWorkshopFormInfo(prevFormInfo => ({
+        ...prevFormInfo,
+        days: [
+          ...prevFormInfo.days.slice(0, arrIndex),
+          {
+            date,
+            index: day.index
+          },
+          ...prevFormInfo.days.slice(arrIndex + 1)
+        ]
+      }));
+    } else {
+      setWorkshopFormInfo(prevFormInfo => ({
+        ...prevFormInfo,
+        days: [
+          {
+            date,
+            index: 0
+          }
+        ]
+      }));
+    }
   };
 
   const removeDateTime = (index) => {
     if (index === 0) {
       // user must have a day
     } else {
-      setWorkshopEditFormInfo(prevFormInfo => ({
+      setWorkshopFormInfo(prevFormInfo => ({
         ...prevFormInfo,
         days: [
           ...prevFormInfo.days.slice(0, index),
@@ -399,13 +426,22 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
 
   const updateColor = (newColor, colorKey) => {
     if (newColor) {
-      setWorkshopEditFormInfo(prevFormInfo => ({
-        ...prevFormInfo,
-        colors: {
-          ...prevFormInfo.colors,
-          [colorKey]: newColor
-        }
-      }));
+      if (workshopFormInfo.colors) {
+        setWorkshopFormInfo(prevFormInfo => ({
+          ...prevFormInfo,
+          colors: {
+            ...prevFormInfo.colors,
+            [colorKey]: newColor
+          }
+        }));        
+      } else {
+        setWorkshopFormInfo(prevFormInfo => ({
+          ...prevFormInfo,
+          colors: {
+            [colorKey]: newColor
+          }
+        }));        
+      }
     }
   };
 
@@ -469,31 +505,43 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
 
   const addWorkshopDateTime = () => {
     const date = new Date().toGMTString() + "+1";
-    const index = workshopEditFormInfo.days.length;
+    const index = workshopFormInfo.days? workshopFormInfo.days.length : 0;
 
-    setWorkshopEditFormInfo(prevFormInfo => ({
-      ...prevFormInfo,
-      days: [
-        ...prevFormInfo.days,
-        {
-          date,
-          index
-        }
-      ]
-    }));
+    if (workshopFormInfo.days) {
+      setWorkshopFormInfo(prevFormInfo => ({
+        ...prevFormInfo,
+        days: [
+          ...prevFormInfo.days,
+          {
+            date,
+            index
+          }
+        ]
+      }));
+    } else {
+      setWorkshopFormInfo(prevFormInfo => ({
+        ...prevFormInfo,
+        days: [
+          {
+            date,
+            index
+          }
+        ]
+      }));
+    }
   };
 
-  console.log(workshopEditFormInfo && workshopEditFormInfo.colors);
+  console.log(workshopFormInfo);
 
   return (
     <div className={classes.root}>
       <Dialog
         open={confirmOpen}
         onClose={isLoading ? null : closeAskforDelete}
-        aria-labelledby="form-dialog-title"
-        className="edit-workshop-dialog"
+        aria-labelledby="delete-workshop-dialog"
+        className="workshop-dialog"
       >
-        <DialogTitle id="form-dialog-title">
+        <DialogTitle id="delete-workshop-dialog-title">
           {isLoading
             ? `(${selected.length}) workshop(s) being deleted...`
             : `(${selected.length}) workshop(s) to be deleted.`}
@@ -512,29 +560,31 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
         </DialogActions>
       </Dialog>
 
+      {/* Add or Edit Workshop Dialog */}
       <Dialog
-        open={open}
+        open={addWorkshopOpen || editWorkshopOpen}
         onClose={isLoading ? null : handleClose}
-        aria-labelledby="form-dialog-title"
-        className="edit-workshop-dialog"
+        aria-labelledby="workshop-dialog"
+        className="workshop-dialog"
       >
-        <DialogTitle id="form-dialog-title">
-          {isLoading
-            ? `(${selected.length}) workshop updating...`
-            : `(${selected.length}) workshop selected`}
+        <DialogTitle id="workshop-dialog-title">
+          {addWorkshopOpen? "Add Workshop" : "Edit Workshop"}
         </DialogTitle>
-        {workshopEditFormInfo ? (
-          <DialogContent className="edit-dialog-form">
+          <DialogContent className="workshop-dialog-form">
             <TextField
               autoFocus
               margin="dense"
-              id="newTitle"
+              id={addWorkshopOpen? "title": "newTitle"}
               disabled={isLoading}
               label="Title"
-              className="edit-title"
+              className="workshop-title"
               type="title"
               onChange={workshopRecord}
-              value={decodeURIComponent(workshopEditFormInfo.title)}
+              value={
+                workshopFormInfo.title
+                  ? workshopFormInfo.title
+                  : ""
+              }
               fullWidth
             />
             <div className="input-table">
@@ -544,11 +594,11 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
                 id="leader"
                 disabled={isLoading}
                 label="Leader"
-                className="edit-leader input-cell"
+                className="workshop-leader input-cell"
                 onChange={workshopRecord}
                 value={
-                  workshopEditFormInfo.leader
-                    ? decodeURIComponent(workshopEditFormInfo.leader)
+                  workshopFormInfo.leader
+                    ? workshopFormInfo.leader
                     : ""
                 }
               />
@@ -558,74 +608,88 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
                 id="url"
                 disabled={isLoading}
                 label="URL"
-                className="edit-url input-cell"
+                className="workshop-url input-cell"
                 onChange={workshopRecord}
                 value={
-                  workshopEditFormInfo.url
-                    ? decodeURIComponent(workshopEditFormInfo.url)
+                  workshopFormInfo.url
+                    ? workshopFormInfo.url
                     : ""
                 }
               />
               <div className="datetime-field-container">
-                {workshopEditFormInfo.days.map((day, index) => (
+                {workshopFormInfo.days?
+                  workshopFormInfo.days.map((day, index) => (
+                    <TextField
+                      key={`datetime-${index}`}
+                      id="days"
+                      label={`Day (Local time, GMT ${-(new Date().getTimezoneOffset() / 60)})`}
+                      type="datetime-local"
+                      defaultValue={parseDateString(day.date)}
+                      className="workshop-days input-cell"
+                      onChange={(e) => updateDateTime(e, day, index)}
+                      InputLabelProps={{
+                        shrink: true,
+                      }}
+                      InputProps={index > 0? {
+                        endAdornment: (
+                          <InputAdornment position="end" onClick={() => removeDateTime(index)}>
+                            <RemoveIcon />
+                          </InputAdornment>
+                        ),
+                      }: {}}
+                    />
+                  )):
                   <TextField
-                    key={`datetime-${index}`}
+                    key="datetime-0"
                     id="days"
                     label={`Day (Local time, GMT ${-(new Date().getTimezoneOffset() / 60)})`}
                     type="datetime-local"
-                    defaultValue={parseDateString(day.date)}
-                    className="edit-days input-cell"
-                    onChange={(e) => updateDateTime(e, day, index)}
+                    className="workshop-days input-cell"
+                    onChange={(e) => updateDateTime(e, { date: new Date(), index: 0 }, 0)}
                     InputLabelProps={{
                       shrink: true,
                     }}
-                    InputProps={index > 0? {
-                      endAdornment: (
-                        <InputAdornment position="end" onClick={() => removeDateTime(index)}>
-                          <RemoveIcon />
-                        </InputAdornment>
-                      ),
-                    }: {}}
                   />
-                ))}
+                }
               </div>
-              <div
-                className="input-cell add-more"
-                onClick={addWorkshopDateTime}
-                >
-                <AddIcon />
-                <Typography>Add More</Typography>
-              </div>
+              {workshopFormInfo.days? 
+                <div
+                  className="input-cell add-more"
+                  onClick={addWorkshopDateTime}
+                  >
+                  <AddIcon />
+                  <Typography>Add More</Typography>
+                </div>              
+              : null}
               <div className="color-field-container">
-                {workshopEditFormInfo.colors && Object.keys(workshopEditFormInfo.colors).map((colorKey, index) => (
+                {workshopColorKeys.map((colorKey, index) => (
                   <ColorPicker
                     key={`color-${index}`}
                     name="color"
                     label={colorKey}
                     className="input-cell"
-                    value={`${workshopEditFormInfo.colors[colorKey]}`}
+                    value={workshopFormInfo.colors && workshopFormInfo.colors[colorKey]? `${workshopFormInfo.colors[colorKey]}`: "#00000"}
                     onChange={(color) => updateColor(color, colorKey)}
-                    InputProps={{ value: `${workshopEditFormInfo.colors[colorKey]}` }}
+                    InputProps={{ value: workshopFormInfo.colors && workshopFormInfo.colors[colorKey]? `${workshopFormInfo.colors[colorKey]}`: "#00000" }}
                   />
                 ))}
               </div>
             </div>
             <MarkdownEditor
               text={
-                workshopEditFormInfo.text
-                  ? decodeURIComponent(workshopEditFormInfo.text)
+                workshopFormInfo.text
+                  ? workshopFormInfo.text
                   : "Enter text here..."
               }
               onChange={updateDescription}
             />
           </DialogContent>
-        ) : null}
         <DialogActions>
           <Button onClick={handleClose} disabled={isLoading} color="primary">
             Cancel
           </Button>
-          <Button onClick={updateWorkshop} disabled={isLoading} color="primary">
-            Save
+          <Button onClick={addWorkshopOpen? addWorkshop: updateWorkshop} disabled={isLoading} color="primary">
+            {addWorkshopOpen? "Add": "Save"}
           </Button>
         </DialogActions>
       </Dialog>

@@ -13,6 +13,7 @@ import DashboardIcon from "@material-ui/icons/Dashboard";
 // import CachedIcon from "@material-ui/icons/Cached";
 // import FaceIcon from "@material-ui/icons/Face";
 import ExitToAppIcon from "@material-ui/icons/ExitToApp";
+import AddIcon from '@material-ui/icons/Add';
 
 import WorkshopsTable from "../../components/WorkshopsTable";
 // import UsersTable from "../../components/UsersTable";
@@ -71,6 +72,7 @@ export default function Dashboard({ firebase, exitApp, handleError }) {
   const [isLoading, setIsLoading] = useState(true);
   // const [userList, setUserList] = React.useState(null);
   const [workshopList, setWorkshopList] = React.useState(null);
+  const [addWorkshopOpen, setAddWorkshopOpen] = React.useState(null);
 
   useEffect(() => {
     getWorkshopData();
@@ -189,7 +191,12 @@ export default function Dashboard({ firebase, exitApp, handleError }) {
             }`}
           >
             <ListItemIcon>
-              <img src={WorkshopLogo} alt="Workshop Logo" width="25" height="25"/>
+              <img
+                src={WorkshopLogo}
+                alt="Workshop Logo"
+                width="25"
+                height="25"
+              />
             </ListItemIcon>
           </ListItem>
           {/* <ListItem
@@ -238,8 +245,19 @@ export default function Dashboard({ firebase, exitApp, handleError }) {
               ? "workshops"
               : null}
           </h2>
-          <div className="page-actions">
-          </div>
+          {location === "workshops" ? (
+            <div className="page-actions">
+              <Button
+                variant="contained"
+                className="workshop-add-btn"
+                disabled={isLoading ? true : false}
+                onClick={() => setAddWorkshopOpen(true)}
+                startIcon={<AddIcon />}
+              >
+                Add Workshop
+              </Button>
+            </div>
+          ) : null}
         </div>
 
         {isLoading ? (
@@ -278,11 +296,13 @@ export default function Dashboard({ firebase, exitApp, handleError }) {
             ) : location === "workshops" ? (
               <>
                 <div className="table-holder">
-                  <WorkshopsTable 
-                    workshopList={workshopList} 
-                    handleError={handleError} 
-                    firebase={firebase} 
+                  <WorkshopsTable
+                    workshopList={workshopList}
+                    handleError={handleError}
+                    firebase={firebase}
                     truncate={truncate}
+                    addWorkshopOpen={addWorkshopOpen}
+                    setAddWorkshopOpen={setAddWorkshopOpen}
                   />
                 </div>
               </>
