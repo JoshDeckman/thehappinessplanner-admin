@@ -276,7 +276,12 @@ export default function Dashboard({ firebase, exitApp, handleError }) {
             ) : location === "workshops" ? (
               <>
                 <div className="table-holder">
-                  <WorkshopsTable workshopList={workshopList} handleError={handleError} firebase={firebase} />
+                  <WorkshopsTable 
+                    workshopList={workshopList} 
+                    handleError={handleError} 
+                    firebase={firebase} 
+                    truncate={truncate}
+                  />
                 </div>
               </>
             ) : null}

@@ -114,14 +114,30 @@
     width: 100%;
   }
   .edit-dialog-form {
-    .edit-title-from {
-      margin-bottom: 20px;
-    }
-    .edit-description-form {
-      margin-bottom: 20px;
-    }
-    .edit-status-from {
-      margin-bottom: 20px;
+    .input-table {
+      margin-bottom: 10px;
+      > div:nth-child(odd) {
+        margin-right: 20px;
+      }
+      .input-cell {
+        text-align: center;
+        vertical-align: middle;
+        width: 48%;
+        margin-bottom: 10px;
+        &.add-more {
+          text-align: left;
+          cursor: pointer;
+          > svg {
+            display: inline-block;
+            vertical-align: middle;
+            width: 16px;
+          }
+          > p {
+            display: inline-block;
+            font-size: 12px;
+          }
+        }
+      }
     }
   }
   .status-dropdown {
