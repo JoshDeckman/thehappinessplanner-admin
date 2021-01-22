@@ -24,10 +24,12 @@ import DialogActions from "@material-ui/core/DialogActions";
 import DialogTitle from "@material-ui/core/DialogTitle";
 import DialogContent from "@material-ui/core/DialogContent";
 import TextField from "@material-ui/core/TextField";
+import InputAdornment from '@material-ui/core/InputAdornment';
 
 import AddIcon from '@material-ui/icons/Add';
 import DeleteIcon from "@material-ui/icons/Delete";
 import EditIcon from "@material-ui/icons/Edit";
+import RemoveIcon from '@material-ui/icons/HighlightOff';
 
 import MarkdownEditor from "./MarkdownEditor";
 import ColorPicker from 'material-ui-color-picker';
@@ -381,6 +383,20 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
     }));
   };
 
+  const removeDateTime = (index) => {
+    if (index === 0) {
+      // user must have a day
+    } else {
+      setWorkshopEditFormInfo(prevFormInfo => ({
+        ...prevFormInfo,
+        days: [
+          ...prevFormInfo.days.slice(0, index),
+          ...prevFormInfo.days.slice(index + 1)
+        ]
+      }));
+    }
+  };
+
   const updateColor = (newColor, colorKey) => {
     if (newColor) {
       setWorkshopEditFormInfo(prevFormInfo => ({
@@ -512,7 +528,7 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
             <TextField
               autoFocus
               margin="dense"
-              id="title"
+              id="newTitle"
               disabled={isLoading}
               label="Title"
               className="edit-title"
@@ -555,7 +571,7 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
                   <TextField
                     key={`datetime-${index}`}
                     id="days"
-                    label="days"
+                    label={`Day (Local time, GMT ${-(new Date().getTimezoneOffset() / 60)})`}
                     type="datetime-local"
                     defaultValue={parseDateString(day.date)}
                     className="edit-days input-cell"
@@ -563,6 +579,13 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
                     InputLabelProps={{
                       shrink: true,
                     }}
+                    InputProps={index > 0? {
+                      endAdornment: (
+                        <InputAdornment position="end" onClick={() => removeDateTime(index)}>
+                          <RemoveIcon />
+                        </InputAdornment>
+                      ),
+                    }: {}}
                   />
                 ))}
               </div>
