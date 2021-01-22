@@ -34,9 +34,33 @@ import RemoveIcon from '@material-ui/icons/HighlightOff';
 import MarkdownEditor from "./MarkdownEditor";
 import ColorPicker from 'material-ui-color-picker';
 
-import "../styles/workshops.scss";
+import Dropzone from 'react-dropzone'
 
 const ReactMarkdown = require('react-markdown/with-html');
+
+const thumb = {
+  display: "inline-flex",
+  borderRadius: 2,
+  border: "1px solid #eaeaea",
+  marginBottom: 8,
+  marginRight: 8,
+  width: 100,
+  height: 100,
+  padding: 4,
+  boxSizing: "border-box"
+};
+
+const thumbInner = {
+  display: "flex",
+  minWidth: 0,
+  overflow: "hidden"
+};
+
+const img = {
+  display: "block",
+  height: "100%",
+  width: "100%,"
+};
 
 const workshopColorKeys = ["background", "boxShadow", "flag", "info"];
 
@@ -241,11 +265,11 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
   const [editWorkshopOpen, setEditWorkshopOpen] = React.useState(false);
   const [confirmOpen, setConfirmOpen] = React.useState(false);
   const [workshopFormInfo, setWorkshopFormInfo] = React.useState({});
+  const [photo, setPhoto] = React.useState(null);
 
   const handleClickOpen = () => {
     if (selected.length === 1) {
       var findSelected = workshopList.find((workshop) => workshop.id === selected[0]);
-      console.log("Selected", findSelected);
       setWorkshopFormInfo(findSelected);
       setEditWorkshopOpen(true);
     }
@@ -254,11 +278,11 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
   const handleClose = () => {
     if (addWorkshopOpen) {
       setAddWorkshopOpen(false);
-      setWorkshopFormInfo({});
     } else {
       setEditWorkshopOpen(false);
-      setWorkshopFormInfo({});      
     }
+    setWorkshopFormInfo({}); 
+    setPhoto(null);     
   };
 
   const handleRequestSort = (event, property) => {
@@ -380,8 +404,6 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
   };
 
   const updateDateTime = (e, day, arrIndex) => {
-    console.log("Incoming Date", e.target.value);
-    console.log("Form Info", workshopFormInfo);
     const newDateTime = e.target.value;
     const date = new Date(newDateTime).toGMTString() + "+1";
 
@@ -531,7 +553,16 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
     }
   };
 
-  console.log(workshopFormInfo);
+  const onDrop = acceptedFiles => {
+    const fileObj = acceptedFiles.map(file =>
+      Object.assign(file, {
+        preview: URL.createObjectURL(file)
+      })
+    );
+
+    console.log("fileObj", fileObj);
+    setPhoto(fileObj[0]);
+  };
 
   return (
     <div className={classes.root}>
@@ -683,6 +714,36 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
               }
               onChange={updateDescription}
             />
+            <div
+              className={
+                photo
+                  ? "drop-uploader-wrap uploader-has-thumb"
+                  : "drop-uploader-wrap"
+              }
+            >
+              <Dropzone accept="image/*" onDrop={onDrop}>
+                {({ getRootProps, getInputProps, isDragActive }) => (
+                  <div
+                    {...getRootProps()}
+                    className={
+                      isDragActive
+                        ? "drop-new-wrap drag-active"
+                        : "drop-new-wrap"
+                    }
+                  >
+                    <input {...getInputProps()} />
+                    <p>Drop Photo</p>
+                  </div>
+                )}
+              </Dropzone>
+              <aside>
+                <div style={thumb}>
+                  <div style={thumbInner}>
+                    <img src={photo? photo.preview: null} style={img} alt="Thumb" />
+                  </div>
+                </div>
+              </aside>
+            </div>
           </DialogContent>
         <DialogActions>
           <Button onClick={handleClose} disabled={isLoading} color="primary">
