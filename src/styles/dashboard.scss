@@ -35,13 +35,20 @@
     }
     .page-actions {
       float: right;
+      .workshop-add-btn {
+        background-color: #9ad2d1;
+        border-radius: 20px;
+        &:hover {
+          background-color: #b0d9eb;
+        }
+      }
     }
   }
   .list-icon > div{
     min-width: initial;
     padding: 10px;
   }
-  div.edit-workshop-dialog > div > div:first-child {
+  div.workshop-dialog > div > div:first-child {
     min-width: 500px;
   }
   div.selected-menu {
@@ -113,15 +120,36 @@
     float: left;
     width: 100%;
   }
-  .edit-dialog-form {
-    .edit-title-from {
-      margin-bottom: 20px;
-    }
-    .edit-description-form {
-      margin-bottom: 20px;
-    }
-    .edit-status-from {
-      margin-bottom: 20px;
+  .workshop-dialog-form {
+    .input-table {
+      margin-bottom: 10px;
+      .workshop-leader {
+        margin-right: 20px;
+      }
+      .datetime-field-container, .color-field-container {
+        > div:nth-child(odd) {
+          margin-right: 20px;
+        }
+      }
+      .input-cell {
+        text-align: center;
+        vertical-align: middle;
+        width: 48%;
+        margin-bottom: 10px;
+        &.add-more {
+          text-align: left;
+          cursor: pointer;
+          > svg {
+            display: inline-block;
+            vertical-align: middle;
+            width: 16px;
+          }
+          > p {
+            display: inline-block;
+            font-size: 12px;
+          }
+        }
+      }
     }
   }
   .status-dropdown {
@@ -132,8 +160,29 @@
     white-space: nowrap;
   }
   
+  .drop-uploader-wrap {
+    margin-top: 20px;
+  }
+
+  .drop-new-wrap {
+    height: 125px;
+    background-color: #EBEBEB;
+    position: relative;
+  }
+
+  .image-preview {
+    position: absolute;
+    bottom: 60px;
+  }
   
-  
+  .drop-photo-text {
+    margin: 0;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+  }
   
   
   

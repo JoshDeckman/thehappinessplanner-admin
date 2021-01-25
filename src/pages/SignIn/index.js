@@ -118,6 +118,7 @@ export default function SignIn({ firebase, updateAuth, handleError }) {
                 label="Password"
                 type="password"
                 id="password"
+                autoComplete="on"
               />
               <Button
                 type="submit"

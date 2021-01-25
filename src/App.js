@@ -26,7 +26,6 @@ export default function App() {
   };
 
   const handleErrorClick = () => {
-    setError(false);
     setErrorMessage(null);
   };
 
@@ -37,11 +36,11 @@ export default function App() {
 
   return (
     <Router>
-      <AlertSnackbar isType="error" isOpen={hasError} handleClick={handleErrorClick} message={errorMessage} />
+      <AlertSnackbar isType="error" isOpen={errorMessage} handleClick={handleErrorClick} message={errorMessage} />
       <Switch>
         {auth ? (
           <Route exact path="/">
-            <Dashboard  firebase={firebase} exitApp={exitApp} handleError={handleError} />
+            <Dashboard  firebase={firebase} exitApp={exitApp} handleError={handleError} hasError={hasError} setError={setError} />
           </Route>
         ) : (
           <Route exact path="/">

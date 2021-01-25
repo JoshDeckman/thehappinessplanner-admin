@@ -24,10 +24,47 @@ import DialogActions from "@material-ui/core/DialogActions";
 import DialogTitle from "@material-ui/core/DialogTitle";
 import DialogContent from "@material-ui/core/DialogContent";
 import TextField from "@material-ui/core/TextField";
+import InputAdornment from '@material-ui/core/InputAdornment';
+
+import AddIcon from '@material-ui/icons/Add';
 import DeleteIcon from "@material-ui/icons/Delete";
 import EditIcon from "@material-ui/icons/Edit";
+import RemoveIcon from '@material-ui/icons/HighlightOff';
+
+import CameraIcon from '../images/camera.svg';
+
+import MarkdownEditor from "./MarkdownEditor";
+import ColorPicker from 'material-ui-color-picker';
+
+import Dropzone from 'react-dropzone';
 
 const ReactMarkdown = require('react-markdown/with-html');
+
+const thumb = {
+  display: "inline-flex",
+  borderRadius: 2,
+  border: "1px solid #eaeaea",
+  marginBottom: 8,
+  marginRight: 8,
+  width: 100,
+  height: 100,
+  padding: 4,
+  boxSizing: "border-box"
+};
+
+const thumbInner = {
+  display: "flex",
+  minWidth: 0,
+  overflow: "hidden"
+};
+
+const img = {
+  display: "block",
+  height: "100%",
+  width: "100%,"
+};
+
+const workshopColorKeys = ["background", "boxShadow", "flag", "info"];
 
 function descendingComparator(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
@@ -56,7 +93,7 @@ function stableSort(array, comparator) {
 }
 
 const headCells = [
-  { id: "title", numeric: false, disablePadding: false, label: "Title" },
+  { id: "title", numeric: false, disablePadding: false, label: "Title / Tag Name" },
   { id: "leader", numeric: false, disablePadding: false, label: "Leader" },
   { id: "url", numeric: false, disablePadding: false, label: "URL" },
   { id: "days", numeric: false, disablePadding: false, label: "Days" },
@@ -218,7 +255,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export default function WorkshopsTable({ workshopList, handleError, firebase }) {
+export default function WorkshopsTable({ workshopList, handleError, firebase, truncate, addWorkshopOpen, setAddWorkshopOpen, hasError, setError }) {
   const classes = useStyles();
   const [order, setOrder] = React.useState("asc");
   const [orderBy, setOrderBy] = React.useState("");
@@ -227,20 +264,34 @@ export default function WorkshopsTable({ workshopList, handleError, firebase }) 
   const [dense] = React.useState(false);
   const [rowsPerPage, setRowsPerPage] = React.useState(25);
   const [isLoading, setIsLoading] = React.useState(false);
-  const [open, setOpen] = React.useState(false);
+  const [editWorkshopOpen, setEditWorkshopOpen] = React.useState(false);
   const [confirmOpen, setConfirmOpen] = React.useState(false);
-  const [workshopEditFormInfo, setWorkshopEditFormInfo] = React.useState(null);
+  const [workshopFormInfo, setWorkshopFormInfo] = React.useState({});
+  const [photo, setPhotoPreview] = React.useState(null);
+  const [file, setFile] = React.useState(null);
 
   const handleClickOpen = () => {
     if (selected.length === 1) {
       var findSelected = workshopList.find((workshop) => workshop.id === selected[0]);
-      setWorkshopEditFormInfo(findSelected);
-      setOpen(true);
+      setWorkshopFormInfo(findSelected);
+      setEditWorkshopOpen(true);
     }
   };
 
   const handleClose = () => {
-    setOpen(false);
+    if (addWorkshopOpen) {
+      setAddWorkshopOpen(false);
+    } else if (editWorkshopOpen) {
+      setEditWorkshopOpen(false);
+    } else if (confirmOpen) {
+      setConfirmOpen(false);
+    }
+    
+    setWorkshopFormInfo({});
+    setSelected([]); 
+    setPhotoPreview(null);
+    setFile(null);
+    setError(false);     
   };
 
   const handleRequestSort = (event, property) => {
@@ -291,27 +342,112 @@ export default function WorkshopsTable({ workshopList, handleError, firebase }) 
 
   const updateWorkshop = () => {
     setIsLoading(true);
-    //TODO: Update Workshop Function
+
     var workshopRef = firebase.database().ref(`workshops/${selected[0]}`);
-    workshopRef
-      .update({ 
-        title: workshopEditFormInfo.title,
-        leader: workshopEditFormInfo.leader,
-        days: workshopEditFormInfo.days,
-        text: workshopEditFormInfo.text,
-        colors: workshopEditFormInfo.colors
-      })
-      .then(() => {
-        console.log("Workshop updated successfully.");
-        setIsLoading(false);
-        setOpen(false);
-        setSelected([]);
-      }).catch((error) => {
-        console.log(error);
-        setIsLoading(false);
-        setOpen(false);
-        handleError("Workshop(s) could not be updated. Please try again.");
-      });
+
+    if (file) {
+      const storageRef = firebase.storage().ref();
+      const storageWorkshopRef = storageRef.child(`workshops/${selected[0]}/image.jpg`);
+
+      storageWorkshopRef
+        .put(file)
+        .then((snapshot) => {
+          workshopRef
+            .child(selected[0])
+            .update({
+              newTitle: workshopFormInfo.newTitle? workshopFormInfo.newTitle: "",
+              leader: workshopFormInfo.leader,
+              days: workshopFormInfo.days,
+              text: workshopFormInfo.text,
+              colors: workshopFormInfo.colors,
+            })
+            .then(() => {
+              setIsLoading(false);
+              handleClose();
+            })
+            .catch((error) => {
+              setIsLoading(false);
+              handleClose();
+              handleError("Workshop could not be updated. Please try again.");
+            });
+        })
+        .catch(error => {
+          handleError("Workshop could not be updated. Please try again.");
+          setIsLoading(false);
+          handleClose();
+        });
+    } else {
+      workshopRef
+        .update({ 
+          newTitle: workshopFormInfo.newTitle? workshopFormInfo.newTitle: "",
+          leader: workshopFormInfo.leader,
+          days: workshopFormInfo.days,
+          text: workshopFormInfo.text,
+          colors: workshopFormInfo.colors
+        })
+        .then(() => {
+          setIsLoading(false);
+          handleClose();
+        })
+        .catch((error) => {
+          setIsLoading(false);
+          handleClose();
+          handleError("Workshop could not be updated. Please try again.");
+        });
+    }
+  };
+
+  const addWorkshop = () => {
+    setIsLoading(true);
+
+    const requiredFields = 
+      workshopFormInfo.colors && workshopFormInfo.days && workshopFormInfo.leader && 
+      workshopFormInfo.text && workshopFormInfo.title && workshopFormInfo.url && 
+      file;
+    
+    if (requiredFields) {
+      const workshopRef = firebase.database().ref("workshops/");
+
+      const newWorkshopRef = workshopRef.push();
+      const newWorkshopKey = newWorkshopRef.key;
+  
+      const storageRef = firebase.storage().ref();
+      const storageWorkshopRef = storageRef.child(`workshops/${newWorkshopKey}/image.jpg`);
+
+      storageWorkshopRef
+        .put(file)
+        .then((snapshot) => {
+          workshopRef
+            .child(newWorkshopKey)
+            .update({
+              colors: workshopFormInfo.colors,
+              days: workshopFormInfo.days,
+              leader: workshopFormInfo.leader,
+              moreInfo: "",
+              removed: "false",
+              text: workshopFormInfo.text,
+              title: workshopFormInfo.title,
+              url: workshopFormInfo.url
+            })
+            .then(() => {
+              setIsLoading(false);
+              handleClose();
+            })
+            .catch((error) => {
+              setIsLoading(false);
+              handleClose();
+              handleError("Workshop could not be added. Please try again.");
+            });
+        })
+        .catch(error => {
+          handleError("Workshop could not be added. Please try again.");
+          setIsLoading(false);
+          handleClose();
+        });
+    } else {
+      handleError("Please complete the required fields");
+      setIsLoading(false);
+    }
   };
 
   const handleDelete = () => {
@@ -325,29 +461,96 @@ export default function WorkshopsTable({ workshopList, handleError, firebase }) 
 
     Promise.all(deleteWorkshopPromises)
       .then(() => {
-        console.log("Workshop updated successfully.");
+        console.log("Workshop(s) deleted successfully.");
         setIsLoading(false);
-        setConfirmOpen(false);
-        setSelected([]);
+        handleClose();
       }).catch((error) => {
-        console.log(error);
-        handleError("Workshop(s) could not be updated. Please try again.");
         setIsLoading(false);
-        setConfirmOpen(false);
+        handleError("Workshop(s) could not be deleted. Please try again.");
+        handleClose();
       });
   };
 
-  const signupRecord = (e) => {
+  const workshopRecord = (e) => {
     var updateVal = e.target.value;
     var updateKey = e.target.id;
-    setWorkshopEditFormInfo(prevFormInfo => ({
+
+    setWorkshopFormInfo(prevFormInfo => ({
       ...prevFormInfo,
       [`${updateKey}`]: updateVal
     }));
   };
 
-  const updateStatus = (e) => {
-    var updateVal = e.target.value;
+  const updateDescription = (text) => {
+    setWorkshopFormInfo(prevFormInfo => ({
+      ...prevFormInfo,
+      text
+    }));
+  };
+
+  const updateDateTime = (e, day, arrIndex) => {
+    const newDateTime = e.target.value;
+    const date = new Date(newDateTime).toGMTString();
+
+    console.log("updateDateTime", date);
+    if (workshopFormInfo.days) {
+      setWorkshopFormInfo(prevFormInfo => ({
+        ...prevFormInfo,
+        days: [
+          ...prevFormInfo.days.slice(0, arrIndex),
+          {
+            date,
+            index: day.index
+          },
+          ...prevFormInfo.days.slice(arrIndex + 1)
+        ]
+      }));
+    } else {
+      setWorkshopFormInfo(prevFormInfo => ({
+        ...prevFormInfo,
+        days: [
+          {
+            date,
+            index: 0
+          }
+        ]
+      }));
+    }
+  };
+
+  const removeDateTime = (index) => {
+    if (index === 0) {
+      // user must have a day
+    } else {
+      setWorkshopFormInfo(prevFormInfo => ({
+        ...prevFormInfo,
+        days: [
+          ...prevFormInfo.days.slice(0, index),
+          ...prevFormInfo.days.slice(index + 1)
+        ]
+      }));
+    }
+  };
+
+  const updateColor = (newColor, colorKey) => {
+    if (newColor) {
+      if (workshopFormInfo.colors) {
+        setWorkshopFormInfo(prevFormInfo => ({
+          ...prevFormInfo,
+          colors: {
+            ...prevFormInfo.colors,
+            [colorKey]: newColor
+          }
+        }));        
+      } else {
+        setWorkshopFormInfo(prevFormInfo => ({
+          ...prevFormInfo,
+          colors: {
+            [colorKey]: newColor
+          }
+        }));        
+      }
+    }
   };
 
   const askToDelete = () => {
@@ -361,7 +564,7 @@ export default function WorkshopsTable({ workshopList, handleError, firebase }) 
   const parseMarkdown = markdownText => {
     return (
       <ReactMarkdown 
-        source={markdownText}
+        source={truncate(markdownText, 100)}
         escapeHTML={false}
       />
     );
@@ -396,15 +599,67 @@ export default function WorkshopsTable({ workshopList, handleError, firebase }) 
     return colorStr;
   };
 
+  const parseDateString = (date) => {   
+    console.log("parseDateString", date); 
+    const year = new Date(date).getFullYear();   
+    const month = ("0" + (new Date(date).getMonth() + 1)).slice(-2);
+    const day = ("0" + new Date(date).getDate()).slice(-2);
+    const hour = ("0" + new Date(date).getHours()).slice(-2);
+    const minutes = ("0" + new Date(date).getMinutes()).slice(-2);
+
+    const parsedDate = `${year}-${month}-${day}T${hour}:${minutes}`;
+
+    return parsedDate;
+  };
+
+  const addWorkshopDateTime = () => {
+    const date = new Date().toGMTString() + "+1";
+    const index = workshopFormInfo.days? workshopFormInfo.days.length : 0;
+
+    if (workshopFormInfo.days) {
+      setWorkshopFormInfo(prevFormInfo => ({
+        ...prevFormInfo,
+        days: [
+          ...prevFormInfo.days,
+          {
+            date,
+            index
+          }
+        ]
+      }));
+    } else {
+      setWorkshopFormInfo(prevFormInfo => ({
+        ...prevFormInfo,
+        days: [
+          {
+            date,
+            index
+          }
+        ]
+      }));
+    }
+  };
+
+  const onDrop = acceptedFiles => {
+    const fileObj = URL.createObjectURL(acceptedFiles[0]);
+    
+    setPhotoPreview(fileObj);
+    setFile(acceptedFiles[0]);
+  };
+
+  const titleValue = workshopFormInfo.newTitle
+    ? workshopFormInfo.newTitle
+    : workshopFormInfo.title;
+
   return (
     <div className={classes.root}>
       <Dialog
         open={confirmOpen}
         onClose={isLoading ? null : closeAskforDelete}
-        aria-labelledby="form-dialog-title"
-        className="edit-workshop-dialog"
+        aria-labelledby="delete-workshop-dialog"
+        className="workshop-dialog"
       >
-        <DialogTitle id="form-dialog-title">
+        <DialogTitle id="delete-workshop-dialog-title">
           {isLoading
             ? `(${selected.length}) workshop(s) being deleted...`
             : `(${selected.length}) workshop(s) to be deleted.`}
@@ -423,80 +678,173 @@ export default function WorkshopsTable({ workshopList, handleError, firebase }) 
         </DialogActions>
       </Dialog>
 
+      {/* Add or Edit Workshop Dialog */}
       <Dialog
-        open={open}
+        open={addWorkshopOpen || editWorkshopOpen}
         onClose={isLoading ? null : handleClose}
-        aria-labelledby="form-dialog-title"
-        className="edit-workshop-dialog"
+        aria-labelledby="workshop-dialog"
+        className="workshop-dialog"
       >
-        <DialogTitle id="form-dialog-title">
-          {isLoading
-            ? `(${selected.length}) workshop(s) updating...`
-            : `(${selected.length}) workshop(s) updated.`}
+        <DialogTitle id="workshop-dialog-title">
+          {addWorkshopOpen? "Add Workshop" : "Edit Workshop"}
         </DialogTitle>
-        {workshopEditFormInfo?
-          <DialogContent className="edit-dialog-form">
-
-          <TextField
-            autoFocus
-            margin="dense"
-            id="title"
-            disabled={isLoading}
-            label="Title"
-            className="edit-title-from"
-            type="title"
-            onChange={signupRecord}
-            value={decodeURIComponent(workshopEditFormInfo.title)}
-            fullWidth
-          />
-          <TextField
-            autoFocus
-            margin="dense"
-            id="leader"
-            disabled={isLoading}
-            label="Leader"
-            className="edit-description-form"
-            onChange={signupRecord}
-            value={
-              workshopEditFormInfo.leader ? decodeURIComponent(workshopEditFormInfo.leader) : ""
-            }
-            style={{ marginRight: "20px" }}
-          />
-          {/* <TextField
-            autoFocus
-            margin="dense"
-            id="days"
-            disabled={isLoading}
-            label="Days"
-            className="edit-description-form"
-            onChange={signupRecord}
-            value={
-              workshopEditFormInfo.days ? decodeURIComponent(workshopEditFormInfo.days) : ""
-            }
-          /> */}
-          {/* <TextField
-            id="description"
-            label="Description"
-            multiline
-            className="edit-description-form"
-            disabled={isLoading}
-            rows={10}
-            fullWidth={true}
-            onChange={signupRecord}
-            variant="outlined"
-            value={
-              workshopEditFormInfo.text ? decodeURIComponent(workshopEditFormInfo.text) : ""
-            }
-          /> */}
-
-        </DialogContent>:null
-        }
+          <DialogContent className="workshop-dialog-form">
+            <TextField
+              autoFocus
+              margin="dense"
+              id={addWorkshopOpen? "title": "newTitle"}
+              disabled={isLoading}
+              label={addWorkshopOpen? "Title / Tag" : "Title"}
+              className="workshop-title"
+              type="title"
+              onChange={workshopRecord}
+              value={titleValue}
+              fullWidth
+              required
+              error={hasError && !titleValue}
+            />
+            <div className="input-table">
+              <TextField
+                autoFocus
+                margin="dense"
+                id="leader"
+                disabled={isLoading}
+                label="Leader"
+                className="workshop-leader input-cell"
+                onChange={workshopRecord}
+                value={
+                  workshopFormInfo.leader
+                    ? workshopFormInfo.leader
+                    : ""
+                }
+                required
+                required
+                error={hasError && !workshopFormInfo.leader}
+              />
+              <TextField
+                autoFocus
+                margin="dense"
+                id="url"
+                disabled={isLoading}
+                label="URL"
+                className="workshop-url input-cell"
+                onChange={workshopRecord}
+                value={
+                  workshopFormInfo.url
+                    ? workshopFormInfo.url
+                    : ""
+                }
+                required
+                error={hasError && !workshopFormInfo.url}
+              />
+              <div className="datetime-field-container">
+                {workshopFormInfo.days?
+                  workshopFormInfo.days.map((day, index) => (
+                    <TextField
+                      key={`datetime-${index}`}
+                      id="days"
+                      label={`Day* (Local time, GMT ${-(new Date().getTimezoneOffset() / 60)})`}
+                      type="datetime-local"
+                      defaultValue={parseDateString(day.date)}
+                      className="workshop-days input-cell"
+                      onChange={(e) => updateDateTime(e, day, index)}
+                      InputLabelProps={{
+                        shrink: true,
+                      }}
+                      InputProps={index > 0? {
+                        endAdornment: (
+                          <InputAdornment position="end" onClick={() => removeDateTime(index)}>
+                            <RemoveIcon />
+                          </InputAdornment>
+                        ),
+                      }: {}}
+                    />
+                  )):
+                  <TextField
+                    key="datetime-0"
+                    id="days"
+                    label={`Day (Local time, GMT ${-(new Date().getTimezoneOffset() / 60)})`}
+                    type="datetime-local"
+                    className="workshop-days input-cell"
+                    onChange={(e) => updateDateTime(e, { date: new Date(), index: 0 }, 0)}
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                    required
+                    error={hasError && !workshopFormInfo.days}
+                  />
+                }
+              </div>
+              {workshopFormInfo.days? 
+                <div
+                  className="input-cell add-more"
+                  onClick={addWorkshopDateTime}
+                  >
+                  <AddIcon />
+                  <Typography>Add More</Typography>
+                </div>              
+              : null}
+              <div className="color-field-container">
+                {workshopColorKeys.map((colorKey, index) => (
+                  <ColorPicker
+                    key={`color-${index}`}
+                    name="color"
+                    label={colorKey}
+                    className="input-cell"
+                    value={workshopFormInfo.colors && workshopFormInfo.colors[colorKey]? `${workshopFormInfo.colors[colorKey]}`: "#00000"}
+                    onChange={(color) => updateColor(color, colorKey)}
+                    InputProps={{ value: workshopFormInfo.colors && workshopFormInfo.colors[colorKey]? `${workshopFormInfo.colors[colorKey]}`: "#00000" }}
+                  />
+                ))}
+              </div>
+            </div>
+            <MarkdownEditor
+              text={
+                workshopFormInfo.text
+                  ? workshopFormInfo.text
+                  : "Enter text here..."
+              }
+              onChange={updateDescription}
+            />
+            <div
+              className={
+                photo
+                  ? "drop-uploader-wrap uploader-has-thumb"
+                  : "drop-uploader-wrap"
+              }
+            >
+              <Dropzone accept="image/*" onDrop={onDrop}>
+                {({ getRootProps, getInputProps, isDragActive }) => (
+                  <div
+                    {...getRootProps()}
+                    className={
+                      isDragActive
+                        ? "drop-new-wrap drag-active"
+                        : "drop-new-wrap"
+                    }
+                  >
+                    <input {...getInputProps()} />
+                    <Typography className="drop-photo-text">Drop Photo</Typography>
+                  </div>
+                )}
+              </Dropzone>
+              {photo || workshopFormInfo.imageURL? 
+                <aside>
+                  <div style={thumb}>
+                    <div style={thumbInner}>
+                      <img src={photo? photo: workshopFormInfo.imageURL? workshopFormInfo.imageURL: CameraIcon} style={img} alt="Thumb" />
+                    </div>
+                  </div>
+                </aside>              
+              :null}
+            </div>
+          </DialogContent>
         <DialogActions>
           <Button onClick={handleClose} disabled={isLoading} color="primary">
             Cancel
           </Button>
-          <Button onClick={updateWorkshop} disabled={isLoading} color="primary">
-            Save
+          <Button onClick={addWorkshopOpen? addWorkshop: updateWorkshop} disabled={isLoading} color="primary">
+            {addWorkshopOpen? "Add": "Save"}
           </Button>
         </DialogActions>
       </Dialog>
@@ -527,7 +875,6 @@ export default function WorkshopsTable({ workshopList, handleError, firebase }) 
               {stableSort(workshopList, getComparator(order, orderBy))
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                 .map((row, index) => {
-
                   const isItemSelected = isSelected(row.id);
                   const labelId = `enhanced-table-checkbox-${index}`;
 
@@ -547,15 +894,29 @@ export default function WorkshopsTable({ workshopList, handleError, firebase }) 
                           inputProps={{ "aria-labelledby": labelId }}
                         />
                       </TableCell>
-                      <TableCell component="th" align="left">
+                      <TableCell
+                        component="th"
+                        align="left"
+                        className="workshop-table-cell"
+                      >
                         {row.title}
                       </TableCell>
-                      <TableCell align="left">{row.leader}</TableCell>
-                      <TableCell align="left"> {row.url}</TableCell>
-                      <TableCell align="left">{parseDays(row.days)}</TableCell>
-                      <TableCell align="left">{parseMarkdown(row.text)}</TableCell>
-                      <TableCell align="left">{parseColors(row.colors)}</TableCell>
-                      {/* <TableCell align="left">{row.videos}</TableCell> */}
+                      <TableCell align="left" className="workshop-table-cell">
+                        {row.leader}
+                      </TableCell>
+                      <TableCell align="left" className="workshop-table-cell">
+                        {" "}
+                        {row.url}
+                      </TableCell>
+                      <TableCell align="left" className="workshop-table-cell">
+                        {parseDays(row.days)}
+                      </TableCell>
+                      <TableCell align="left" className="workshop-table-cell">
+                        {parseMarkdown(row.shortInfo)}
+                      </TableCell>
+                      <TableCell align="left" className="workshop-table-cell">
+                        {parseColors(row.colors)}
+                      </TableCell>
                     </TableRow>
                   );
                 })}
