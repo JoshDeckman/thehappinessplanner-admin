@@ -65,7 +65,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export default function Dashboard({ firebase, exitApp, handleError }) {
+export default function Dashboard({ firebase, exitApp, handleError, hasError, setError }) {
   const classes = useStyles();
 
   const [location, setLocation] = React.useState("dashboard");
@@ -303,6 +303,8 @@ export default function Dashboard({ firebase, exitApp, handleError }) {
                     truncate={truncate}
                     addWorkshopOpen={addWorkshopOpen}
                     setAddWorkshopOpen={setAddWorkshopOpen}
+                    hasError={hasError}
+                    setError={setError}
                   />
                 </div>
               </>

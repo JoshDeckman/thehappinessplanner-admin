@@ -31,10 +31,12 @@ import DeleteIcon from "@material-ui/icons/Delete";
 import EditIcon from "@material-ui/icons/Edit";
 import RemoveIcon from '@material-ui/icons/HighlightOff';
 
+import CameraIcon from '../images/camera.svg';
+
 import MarkdownEditor from "./MarkdownEditor";
 import ColorPicker from 'material-ui-color-picker';
 
-import Dropzone from 'react-dropzone'
+import Dropzone from 'react-dropzone';
 
 const ReactMarkdown = require('react-markdown/with-html');
 
@@ -253,7 +255,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export default function WorkshopsTable({ workshopList, handleError, firebase, truncate, addWorkshopOpen, setAddWorkshopOpen }) {
+export default function WorkshopsTable({ workshopList, handleError, firebase, truncate, addWorkshopOpen, setAddWorkshopOpen, hasError, setError }) {
   const classes = useStyles();
   const [order, setOrder] = React.useState("asc");
   const [orderBy, setOrderBy] = React.useState("");
@@ -265,7 +267,8 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
   const [editWorkshopOpen, setEditWorkshopOpen] = React.useState(false);
   const [confirmOpen, setConfirmOpen] = React.useState(false);
   const [workshopFormInfo, setWorkshopFormInfo] = React.useState({});
-  const [photo, setPhoto] = React.useState(null);
+  const [photo, setPhotoPreview] = React.useState(null);
+  const [file, setFile] = React.useState(null);
 
   const handleClickOpen = () => {
     if (selected.length === 1) {
@@ -278,11 +281,17 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
   const handleClose = () => {
     if (addWorkshopOpen) {
       setAddWorkshopOpen(false);
-    } else {
+    } else if (editWorkshopOpen) {
       setEditWorkshopOpen(false);
+    } else if (confirmOpen) {
+      setConfirmOpen(false);
     }
-    setWorkshopFormInfo({}); 
-    setPhoto(null);     
+    
+    setWorkshopFormInfo({});
+    setSelected([]); 
+    setPhotoPreview(null);
+    setFile(null);
+    setError(false);     
   };
 
   const handleRequestSort = (event, property) => {
@@ -333,34 +342,112 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
 
   const updateWorkshop = () => {
     setIsLoading(true);
-    //TODO: Update Workshop Function
+
     var workshopRef = firebase.database().ref(`workshops/${selected[0]}`);
-    workshopRef
-      .update({ 
-        title: workshopFormInfo.title,
-        leader: workshopFormInfo.leader,
-        days: workshopFormInfo.days,
-        text: workshopFormInfo.text,
-        colors: workshopFormInfo.colors
-      })
-      .then(() => {
-        console.log("Workshop updated successfully.");
-        setIsLoading(false);
-        setEditWorkshopOpen(false);
-        setSelected([]);
-        setWorkshopFormInfo({});
-      }).catch((error) => {
-        console.log(error);
-        setIsLoading(false);
-        setEditWorkshopOpen(false);
-        handleError("Workshop(s) could not be updated. Please try again.");
-        setWorkshopFormInfo({});
-      });
+
+    if (file) {
+      const storageRef = firebase.storage().ref();
+      const storageWorkshopRef = storageRef.child(`workshops/${selected[0]}/image.jpg`);
+
+      storageWorkshopRef
+        .put(file)
+        .then((snapshot) => {
+          workshopRef
+            .child(selected[0])
+            .update({
+              newTitle: workshopFormInfo.newTitle? workshopFormInfo.newTitle: "",
+              leader: workshopFormInfo.leader,
+              days: workshopFormInfo.days,
+              text: workshopFormInfo.text,
+              colors: workshopFormInfo.colors,
+            })
+            .then(() => {
+              setIsLoading(false);
+              handleClose();
+            })
+            .catch((error) => {
+              setIsLoading(false);
+              handleClose();
+              handleError("Workshop could not be updated. Please try again.");
+            });
+        })
+        .catch(error => {
+          handleError("Workshop could not be updated. Please try again.");
+          setIsLoading(false);
+          handleClose();
+        });
+    } else {
+      workshopRef
+        .update({ 
+          newTitle: workshopFormInfo.newTitle? workshopFormInfo.newTitle: "",
+          leader: workshopFormInfo.leader,
+          days: workshopFormInfo.days,
+          text: workshopFormInfo.text,
+          colors: workshopFormInfo.colors
+        })
+        .then(() => {
+          setIsLoading(false);
+          handleClose();
+        })
+        .catch((error) => {
+          setIsLoading(false);
+          handleClose();
+          handleError("Workshop could not be updated. Please try again.");
+        });
+    }
   };
 
   const addWorkshop = () => {
-    console.log("workshopFormInfo", workshopFormInfo);
-    setWorkshopFormInfo({});
+    setIsLoading(true);
+
+    const requiredFields = 
+      workshopFormInfo.colors && workshopFormInfo.days && workshopFormInfo.leader && 
+      workshopFormInfo.text && workshopFormInfo.title && workshopFormInfo.url && 
+      file;
+    
+    if (requiredFields) {
+      const workshopRef = firebase.database().ref("workshops/");
+
+      const newWorkshopRef = workshopRef.push();
+      const newWorkshopKey = newWorkshopRef.key;
+  
+      const storageRef = firebase.storage().ref();
+      const storageWorkshopRef = storageRef.child(`workshops/${newWorkshopKey}/image.jpg`);
+
+      storageWorkshopRef
+        .put(file)
+        .then((snapshot) => {
+          workshopRef
+            .child(newWorkshopKey)
+            .update({
+              colors: workshopFormInfo.colors,
+              days: workshopFormInfo.days,
+              leader: workshopFormInfo.leader,
+              moreInfo: "",
+              removed: "false",
+              text: workshopFormInfo.text,
+              title: workshopFormInfo.title,
+              url: workshopFormInfo.url
+            })
+            .then(() => {
+              setIsLoading(false);
+              handleClose();
+            })
+            .catch((error) => {
+              setIsLoading(false);
+              handleClose();
+              handleError("Workshop could not be added. Please try again.");
+            });
+        })
+        .catch(error => {
+          handleError("Workshop could not be added. Please try again.");
+          setIsLoading(false);
+          handleClose();
+        });
+    } else {
+      handleError("Please complete the required fields");
+      setIsLoading(false);
+    }
   };
 
   const handleDelete = () => {
@@ -374,15 +461,13 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
 
     Promise.all(deleteWorkshopPromises)
       .then(() => {
-        console.log("Workshop deleted successfully.");
+        console.log("Workshop(s) deleted successfully.");
         setIsLoading(false);
-        setConfirmOpen(false);
-        setSelected([]);
+        handleClose();
       }).catch((error) => {
-        console.log(error);
-        handleError("Workshop(s) could not be deleted. Please try again.");
         setIsLoading(false);
-        setConfirmOpen(false);
+        handleError("Workshop(s) could not be deleted. Please try again.");
+        handleClose();
       });
   };
 
@@ -405,8 +490,9 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
 
   const updateDateTime = (e, day, arrIndex) => {
     const newDateTime = e.target.value;
-    const date = new Date(newDateTime).toGMTString() + "+1";
+    const date = new Date(newDateTime).toGMTString();
 
+    console.log("updateDateTime", date);
     if (workshopFormInfo.days) {
       setWorkshopFormInfo(prevFormInfo => ({
         ...prevFormInfo,
@@ -513,7 +599,8 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
     return colorStr;
   };
 
-  const parseDateString = (date) => {    
+  const parseDateString = (date) => {   
+    console.log("parseDateString", date); 
     const year = new Date(date).getFullYear();   
     const month = ("0" + (new Date(date).getMonth() + 1)).slice(-2);
     const day = ("0" + new Date(date).getDate()).slice(-2);
@@ -554,15 +641,15 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
   };
 
   const onDrop = acceptedFiles => {
-    const fileObj = acceptedFiles.map(file =>
-      Object.assign(file, {
-        preview: URL.createObjectURL(file)
-      })
-    );
-
-    console.log("fileObj", fileObj);
-    setPhoto(fileObj[0]);
+    const fileObj = URL.createObjectURL(acceptedFiles[0]);
+    
+    setPhotoPreview(fileObj);
+    setFile(acceptedFiles[0]);
   };
+
+  const titleValue = workshopFormInfo.newTitle
+    ? workshopFormInfo.newTitle
+    : workshopFormInfo.title;
 
   return (
     <div className={classes.root}>
@@ -607,16 +694,14 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
               margin="dense"
               id={addWorkshopOpen? "title": "newTitle"}
               disabled={isLoading}
-              label="Title"
+              label={addWorkshopOpen? "Title / Tag" : "Title"}
               className="workshop-title"
               type="title"
               onChange={workshopRecord}
-              value={
-                workshopFormInfo.title
-                  ? workshopFormInfo.title
-                  : ""
-              }
+              value={titleValue}
               fullWidth
+              required
+              error={hasError && !titleValue}
             />
             <div className="input-table">
               <TextField
@@ -632,6 +717,9 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
                     ? workshopFormInfo.leader
                     : ""
                 }
+                required
+                required
+                error={hasError && !workshopFormInfo.leader}
               />
               <TextField
                 autoFocus
@@ -646,6 +734,8 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
                     ? workshopFormInfo.url
                     : ""
                 }
+                required
+                error={hasError && !workshopFormInfo.url}
               />
               <div className="datetime-field-container">
                 {workshopFormInfo.days?
@@ -653,7 +743,7 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
                     <TextField
                       key={`datetime-${index}`}
                       id="days"
-                      label={`Day (Local time, GMT ${-(new Date().getTimezoneOffset() / 60)})`}
+                      label={`Day* (Local time, GMT ${-(new Date().getTimezoneOffset() / 60)})`}
                       type="datetime-local"
                       defaultValue={parseDateString(day.date)}
                       className="workshop-days input-cell"
@@ -680,6 +770,8 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
                     InputLabelProps={{
                       shrink: true,
                     }}
+                    required
+                    error={hasError && !workshopFormInfo.days}
                   />
                 }
               </div>
@@ -732,17 +824,19 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
                     }
                   >
                     <input {...getInputProps()} />
-                    <p>Drop Photo</p>
+                    <Typography className="drop-photo-text">Drop Photo</Typography>
                   </div>
                 )}
               </Dropzone>
-              <aside>
-                <div style={thumb}>
-                  <div style={thumbInner}>
-                    <img src={photo? photo.preview: null} style={img} alt="Thumb" />
+              {photo || workshopFormInfo.imageURL? 
+                <aside>
+                  <div style={thumb}>
+                    <div style={thumbInner}>
+                      <img src={photo? photo: workshopFormInfo.imageURL? workshopFormInfo.imageURL: CameraIcon} style={img} alt="Thumb" />
+                    </div>
                   </div>
-                </div>
-              </aside>
+                </aside>              
+              :null}
             </div>
           </DialogContent>
         <DialogActions>
