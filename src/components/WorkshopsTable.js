@@ -498,7 +498,6 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
     const newDateTime = e.target.value;
     const date = new Date(newDateTime).toGMTString();
 
-    console.log("updateDateTime", date);
     if (workshopFormInfo.days) {
       setWorkshopFormInfo(prevFormInfo => ({
         ...prevFormInfo,
@@ -525,17 +524,15 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
   };
 
   const removeDateTime = (index) => {
-    if (index === 0) {
-      // user must have a day
-    } else {
-      setWorkshopFormInfo(prevFormInfo => ({
-        ...prevFormInfo,
-        days: [
-          ...prevFormInfo.days.slice(0, index),
-          ...prevFormInfo.days.slice(index + 1)
-        ]
-      }));
-    }
+    setWorkshopFormInfo(prevFormInfo => ({
+      ...prevFormInfo,
+      days: [
+        ...prevFormInfo.days.slice(0, index),
+        ...prevFormInfo.days.slice(index + 1)
+      ]
+    }));
+
+    console.log("wfi", workshopFormInfo)
   };
 
   const updateColor = (newColor, colorKey) => {
@@ -606,7 +603,6 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
   };
 
   const parseDateString = (date) => {   
-    console.log("parseDateString", date); 
     const year = new Date(date).getFullYear();   
     const month = ("0" + (new Date(date).getMonth() + 1)).slice(-2);
     const day = ("0" + new Date(date).getDate()).slice(-2);
@@ -619,7 +615,7 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
   };
 
   const addWorkshopDateTime = () => {
-    const date = new Date().toGMTString() + "+1";
+    const date = new Date().toGMTString();
     const index = workshopFormInfo.days? workshopFormInfo.days.length : 0;
 
     if (workshopFormInfo.days) {
@@ -751,7 +747,7 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
                       id="days"
                       label={`Day* (Local time, GMT ${-(new Date().getTimezoneOffset() / 60)})`}
                       type="datetime-local"
-                      defaultValue={parseDateString(day.date)}
+                      value={parseDateString(day.date)}
                       className="workshop-days input-cell"
                       onChange={(e) => updateDateTime(e, day, index)}
                       InputLabelProps={{
@@ -792,15 +788,16 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
               : null}
               <div className="color-field-container">
                 {workshopColorKeys.map((colorKey, index) => (
-                  <ColorPicker
-                    key={`color-${index}`}
-                    name="color"
-                    label={colorKey}
-                    className="input-cell"
-                    value={workshopFormInfo.colors && workshopFormInfo.colors[colorKey]? `${workshopFormInfo.colors[colorKey]}`: "#00000"}
-                    onChange={(color) => updateColor(color, colorKey)}
-                    InputProps={{ value: workshopFormInfo.colors && workshopFormInfo.colors[colorKey]? `${workshopFormInfo.colors[colorKey]}`: "#00000" }}
-                  />
+                 <div>
+                   <ColorPicker
+                     key={`color-${index}`}
+                     name="color"
+                     label={colorKey}
+                     value={workshopFormInfo.colors && workshopFormInfo.colors[colorKey]? `${workshopFormInfo.colors[colorKey]}`: "#00000"}
+                     onChange={(color) => updateColor(color, colorKey)}
+                     InputProps={{ value: workshopFormInfo.colors && workshopFormInfo.colors[colorKey]? `${workshopFormInfo.colors[colorKey]}`: "#00000" }}
+                   />
+                 </div>
                 ))}
               </div>
             </div>
