@@ -93,7 +93,8 @@ function stableSort(array, comparator) {
 }
 
 const headCells = [
-  { id: "title", numeric: false, disablePadding: false, label: "Title / Tag Name" },
+  { id: "title", numeric: false, disablePadding: false, label: "Tag Name" },
+  { id: "newTitle", numeric: false, disablePadding: false, label: "Title" },
   { id: "leader", numeric: false, disablePadding: false, label: "Leader" },
   { id: "url", numeric: false, disablePadding: false, label: "URL" },
   { id: "days", numeric: false, disablePadding: false, label: "Days" },
@@ -133,18 +134,23 @@ function EnhancedTableHead(props) {
             className="table-header-text"
             sortDirection={orderBy === headCell.id ? order : false}
           >
-            <TableSortLabel
-              active={orderBy === headCell.id}
-              direction={orderBy === headCell.id ? order : "asc"}
-              onClick={createSortHandler(headCell.id)}
-            >
-              {headCell.label}
-              {orderBy === headCell.id ? (
-                <span className={classes.visuallyHidden}>
-                  {order === "desc" ? "sorted descending" : "sorted ascending"}
-                </span>
-              ) : null}
-            </TableSortLabel>
+            {headCell.id === "colors" || headCell.id === "days"? 
+              <div>
+                {headCell.label}
+              </div>:
+              <TableSortLabel
+                active={orderBy === headCell.id}
+                direction={orderBy === headCell.id ? order : "asc"}
+                onClick={createSortHandler(headCell.id)}
+              >
+                {headCell.label}
+                {orderBy === headCell.id ? (
+                  <span className={classes.visuallyHidden}>
+                    {order === "desc" ? "sorted descending" : "sorted ascending"}
+                  </span>
+                ) : null}
+              </TableSortLabel>
+            }
           </TableCell>
         ))}
       </TableRow>
@@ -461,12 +467,12 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
 
     Promise.all(deleteWorkshopPromises)
       .then(() => {
-        console.log("Workshop(s) deleted successfully.");
+        console.log("Workshop(s) removed successfully.");
         setIsLoading(false);
         handleClose();
       }).catch((error) => {
         setIsLoading(false);
-        handleError("Workshop(s) could not be deleted. Please try again.");
+        handleError("Workshop(s) could not be removed. Please try again.");
         handleClose();
       });
   };
@@ -492,7 +498,6 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
     const newDateTime = e.target.value;
     const date = new Date(newDateTime).toGMTString();
 
-    console.log("updateDateTime", date);
     if (workshopFormInfo.days) {
       setWorkshopFormInfo(prevFormInfo => ({
         ...prevFormInfo,
@@ -519,17 +524,15 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
   };
 
   const removeDateTime = (index) => {
-    if (index === 0) {
-      // user must have a day
-    } else {
-      setWorkshopFormInfo(prevFormInfo => ({
-        ...prevFormInfo,
-        days: [
-          ...prevFormInfo.days.slice(0, index),
-          ...prevFormInfo.days.slice(index + 1)
-        ]
-      }));
-    }
+    setWorkshopFormInfo(prevFormInfo => ({
+      ...prevFormInfo,
+      days: [
+        ...prevFormInfo.days.slice(0, index),
+        ...prevFormInfo.days.slice(index + 1)
+      ]
+    }));
+
+    console.log("wfi", workshopFormInfo)
   };
 
   const updateColor = (newColor, colorKey) => {
@@ -564,7 +567,7 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
   const parseMarkdown = markdownText => {
     return (
       <ReactMarkdown 
-        source={truncate(markdownText, 100)}
+        source={markdownText}
         escapeHTML={false}
       />
     );
@@ -600,7 +603,6 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
   };
 
   const parseDateString = (date) => {   
-    console.log("parseDateString", date); 
     const year = new Date(date).getFullYear();   
     const month = ("0" + (new Date(date).getMonth() + 1)).slice(-2);
     const day = ("0" + new Date(date).getDate()).slice(-2);
@@ -613,7 +615,7 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
   };
 
   const addWorkshopDateTime = () => {
-    const date = new Date().toGMTString() + "+1";
+    const date = new Date().toGMTString();
     const index = workshopFormInfo.days? workshopFormInfo.days.length : 0;
 
     if (workshopFormInfo.days) {
@@ -661,8 +663,8 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
       >
         <DialogTitle id="delete-workshop-dialog-title">
           {isLoading
-            ? `(${selected.length}) workshop(s) being deleted...`
-            : `(${selected.length}) workshop(s) to be deleted.`}
+            ? `(${selected.length}) workshop(s) being removed...`
+            : `(${selected.length}) workshop(s) to be removed.`}
         </DialogTitle>
         <DialogActions>
           <Button
@@ -673,7 +675,7 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
             Cancel
           </Button>
           <Button onClick={handleDelete} disabled={isLoading} color="primary">
-            Delete
+            Remove
           </Button>
         </DialogActions>
       </Dialog>
@@ -745,7 +747,7 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
                       id="days"
                       label={`Day* (Local time, GMT ${-(new Date().getTimezoneOffset() / 60)})`}
                       type="datetime-local"
-                      defaultValue={parseDateString(day.date)}
+                      value={parseDateString(day.date)}
                       className="workshop-days input-cell"
                       onChange={(e) => updateDateTime(e, day, index)}
                       InputLabelProps={{
@@ -786,15 +788,16 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
               : null}
               <div className="color-field-container">
                 {workshopColorKeys.map((colorKey, index) => (
-                  <ColorPicker
-                    key={`color-${index}`}
-                    name="color"
-                    label={colorKey}
-                    className="input-cell"
-                    value={workshopFormInfo.colors && workshopFormInfo.colors[colorKey]? `${workshopFormInfo.colors[colorKey]}`: "#00000"}
-                    onChange={(color) => updateColor(color, colorKey)}
-                    InputProps={{ value: workshopFormInfo.colors && workshopFormInfo.colors[colorKey]? `${workshopFormInfo.colors[colorKey]}`: "#00000" }}
-                  />
+                 <div className="color-field">
+                   <ColorPicker
+                     key={`color-${index}`}
+                     name="color"
+                     label={colorKey}
+                     value={workshopFormInfo.colors && workshopFormInfo.colors[colorKey]? `${workshopFormInfo.colors[colorKey]}`: "#00000"}
+                     onChange={(color) => updateColor(color, colorKey)}
+                     InputProps={{ value: workshopFormInfo.colors && workshopFormInfo.colors[colorKey]? `${workshopFormInfo.colors[colorKey]}`: "#00000" }}
+                   />
+                 </div>
                 ))}
               </div>
             </div>
@@ -900,6 +903,13 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
                         className="workshop-table-cell"
                       >
                         {row.title}
+                      </TableCell>
+                      <TableCell
+                        component="th"
+                        align="left"
+                        className="workshop-table-cell"
+                      >
+                        {row.newTitle? row.newTitle: row.title}
                       </TableCell>
                       <TableCell align="left" className="workshop-table-cell">
                         {row.leader}
