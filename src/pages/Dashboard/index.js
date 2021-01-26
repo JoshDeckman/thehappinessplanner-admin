@@ -12,10 +12,12 @@ import Button from "@material-ui/core/Button";
 import DashboardIcon from "@material-ui/icons/Dashboard";
 // import CachedIcon from "@material-ui/icons/Cached";
 // import FaceIcon from "@material-ui/icons/Face";
+import TrashIcon from '@material-ui/icons/DeleteOutlineOutlined';
 import ExitToAppIcon from "@material-ui/icons/ExitToApp";
 import AddIcon from '@material-ui/icons/Add';
 
 import WorkshopsTable from "../../components/WorkshopsTable";
+import RemovedWorkshopsTable from "../../components/RemovedWorkshopsTable";
 // import UsersTable from "../../components/UsersTable";
 
 import HappinessLogo from "../../images/happiness-h-logo.png";
@@ -72,6 +74,7 @@ export default function Dashboard({ firebase, exitApp, handleError, hasError, se
   const [isLoading, setIsLoading] = useState(true);
   // const [userList, setUserList] = React.useState(null);
   const [workshopList, setWorkshopList] = React.useState(null);
+  const [removedWorkshopList, setRemovedWorkshopList] = React.useState(null);
   const [addWorkshopOpen, setAddWorkshopOpen] = React.useState(null);
 
   useEffect(() => {
@@ -83,25 +86,33 @@ export default function Dashboard({ firebase, exitApp, handleError, hasError, se
   const getWorkshopData = () => {
     console.log("Fetching Workshop data...");
     firebase.database().ref(`/workshops/`)
-      .orderByChild("removed")
-      .equalTo("false")
       .on("value", (snapshot) => {
         if (snapshot.val() != null) {
           const workshopData = snapshot.val();
           const workshopKeys = Object.keys(workshopData);
           const workshopList = Object.values(workshopData);
 
+          const removedWorkshopList = [];
+          const displayedWorkshopList = [];
+
           getWorkshopPhotos(workshopKeys, workshopList)
             .then((workshopURLs) => {
-
               if (workshopURLs && workshopURLs.length > 0) {
                 workshopList.forEach((event, index) => {
                   event.id = workshopKeys[index];
                   event.shortInfo = truncate(event.text);
                   event.imageURL = workshopURLs[index];
+
+                  if (event.removed === "true") {
+                    removedWorkshopList.push(event);
+                  } else {
+                    displayedWorkshopList.push(event);
+                  }
                 });
   
-                setWorkshopList(workshopList);
+                setRemovedWorkshopList(removedWorkshopList);
+                setWorkshopList(displayedWorkshopList);
+
                 setIsLoading(false);
               } else {
                 setWorkshopList([]);
@@ -213,6 +224,18 @@ export default function Dashboard({ firebase, exitApp, handleError, hasError, se
           </ListItem> */}
           <ListItem
             button
+            key={"users-i"}
+            onClick={() => handlePageChange("removed-workshops")}
+            className={`list-icon ${
+              location === "removed-workshops" ? "selected-menu users" : ""
+            }`}
+          >
+            <ListItemIcon>
+              <TrashIcon />
+            </ListItemIcon>
+          </ListItem>
+          <ListItem
+            button
             onClick={exitApp}
             key={"signout-i"}
             className="list-icon"
@@ -233,6 +256,8 @@ export default function Dashboard({ firebase, exitApp, handleError, hasError, se
               ? "users"
               : location === "workshops"
               ? "workshops"
+              : location === "removed-workshops"
+              ? "Removed Workshops"
               : null
           }`}
         >
@@ -243,6 +268,8 @@ export default function Dashboard({ firebase, exitApp, handleError, hasError, se
               ? "users"
               : location === "workshops"
               ? "workshops"
+              : location === "removed-workshops"
+              ? "removed workshops"
               : null}
           </h2>
           {location === "workshops" ? (
@@ -285,6 +312,13 @@ export default function Dashboard({ firebase, exitApp, handleError, hasError, se
                     <h1>{numberWithCommas(userList.length)}</h1>
                     <h3>All Users</h3>
                   </Button> */}
+                  <Button
+                    className="count-icon users"
+                    onClick={() => handlePageChange("removed-workshops")}
+                  >
+                    <h1>{numberWithCommas(removedWorkshopList.length)}</h1>
+                    <h3>Removed Workshops</h3>
+                  </Button>
                 </div>
               </>
             ) : location === "users" ? (
@@ -303,6 +337,19 @@ export default function Dashboard({ firebase, exitApp, handleError, hasError, se
                     truncate={truncate}
                     addWorkshopOpen={addWorkshopOpen}
                     setAddWorkshopOpen={setAddWorkshopOpen}
+                    hasError={hasError}
+                    setError={setError}
+                  />
+                </div>
+              </>
+            ) : location === "removed-workshops" ? (
+              <>
+                <div className="table-holder">
+                  <RemovedWorkshopsTable
+                    workshopList={removedWorkshopList}
+                    handleError={handleError}
+                    firebase={firebase}
+                    truncate={truncate}
                     hasError={hasError}
                     setError={setError}
                   />

@@ -93,7 +93,8 @@ function stableSort(array, comparator) {
 }
 
 const headCells = [
-  { id: "title", numeric: false, disablePadding: false, label: "Title / Tag Name" },
+  { id: "title", numeric: false, disablePadding: false, label: "Tag Name" },
+  { id: "newTitle", numeric: false, disablePadding: false, label: "Title" },
   { id: "leader", numeric: false, disablePadding: false, label: "Leader" },
   { id: "url", numeric: false, disablePadding: false, label: "URL" },
   { id: "days", numeric: false, disablePadding: false, label: "Days" },
@@ -461,12 +462,12 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
 
     Promise.all(deleteWorkshopPromises)
       .then(() => {
-        console.log("Workshop(s) deleted successfully.");
+        console.log("Workshop(s) removed successfully.");
         setIsLoading(false);
         handleClose();
       }).catch((error) => {
         setIsLoading(false);
-        handleError("Workshop(s) could not be deleted. Please try again.");
+        handleError("Workshop(s) could not be removed. Please try again.");
         handleClose();
       });
   };
@@ -564,7 +565,7 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
   const parseMarkdown = markdownText => {
     return (
       <ReactMarkdown 
-        source={truncate(markdownText, 100)}
+        source={markdownText}
         escapeHTML={false}
       />
     );
@@ -661,8 +662,8 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
       >
         <DialogTitle id="delete-workshop-dialog-title">
           {isLoading
-            ? `(${selected.length}) workshop(s) being deleted...`
-            : `(${selected.length}) workshop(s) to be deleted.`}
+            ? `(${selected.length}) workshop(s) being removed...`
+            : `(${selected.length}) workshop(s) to be removed.`}
         </DialogTitle>
         <DialogActions>
           <Button
@@ -673,7 +674,7 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
             Cancel
           </Button>
           <Button onClick={handleDelete} disabled={isLoading} color="primary">
-            Delete
+            Remove
           </Button>
         </DialogActions>
       </Dialog>
@@ -900,6 +901,13 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
                         className="workshop-table-cell"
                       >
                         {row.title}
+                      </TableCell>
+                      <TableCell
+                        component="th"
+                        align="left"
+                        className="workshop-table-cell"
+                      >
+                        {row.newTitle? row.newTitle: row.title}
                       </TableCell>
                       <TableCell align="left" className="workshop-table-cell">
                         {row.leader}
