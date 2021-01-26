@@ -788,7 +788,7 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
               : null}
               <div className="color-field-container">
                 {workshopColorKeys.map((colorKey, index) => (
-                 <div>
+                 <div className="color-field">
                    <ColorPicker
                      key={`color-${index}`}
                      name="color"

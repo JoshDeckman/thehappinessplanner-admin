@@ -135,7 +135,10 @@
       .color-field-container {
         display: block;
         margin-top: 40px;
-        margin-bottom: 40px;
+        margin-bottom: 28px;
+        .color-field {
+          margin-bottom: 12px;
+        }
         > div {
           display: inline-block;
           width: 50%;
