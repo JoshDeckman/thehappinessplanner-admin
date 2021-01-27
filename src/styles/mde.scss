@@ -11,3 +11,15 @@
   .container {
     width: 100%;
   }
+
+  .markdown-editor {
+    .react-mde {
+      .mde-header {
+        ul:nth-child(3) {
+          li:last-child {
+            display: none;
+          }
+        }
+      }
+    }
+  }

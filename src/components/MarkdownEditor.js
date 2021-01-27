@@ -12,12 +12,30 @@ const converter = new Showdown.Converter({
   tasklists: true
 });
 
+const enabledToolbarCommands = [
+[
+  "header",
+  "bold",
+  "italic",
+  "strikethrough"
+],
+[
+  "link"
+],
+[
+  "unordered-list",
+  "ordered-list",
+  "checked-list"
+]
+];
+
 const MarkdownEditor = ({ text, onChange }) => {
   const [selectedTab, setSelectedTab] = React.useState("write");
 
   return (
     <div className="container">
       <ReactMde
+        toolbarCommands={enabledToolbarCommands}
         id="description"
         value={text}
         onChange={onChange}

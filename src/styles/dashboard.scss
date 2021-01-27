@@ -150,6 +150,7 @@
         width: 48%;
         margin-bottom: 10px;
         &.add-more {
+          margin-top: 4px;
           text-align: left;
           cursor: pointer;
           > svg {
@@ -180,6 +181,10 @@
   .drop-new-wrap {
     height: 125px;
     background-color: #EBEBEB;
+    position: relative;
+  }
+
+  .drop-existing-wrap {
     position: relative;
   }
 
