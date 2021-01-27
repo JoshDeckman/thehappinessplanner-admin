@@ -359,13 +359,13 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
         .put(file)
         .then((snapshot) => {
           workshopRef
-            .child(selected[0])
             .update({
               newTitle: workshopFormInfo.newTitle? workshopFormInfo.newTitle: "",
               leader: workshopFormInfo.leader,
               days: workshopFormInfo.days,
               text: workshopFormInfo.text,
               colors: workshopFormInfo.colors,
+              url: workshopFormInfo.url
             })
             .then(() => {
               setIsLoading(false);
@@ -389,7 +389,8 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
           leader: workshopFormInfo.leader,
           days: workshopFormInfo.days,
           text: workshopFormInfo.text,
-          colors: workshopFormInfo.colors
+          colors: workshopFormInfo.colors,
+          url: workshopFormInfo.url
         })
         .then(() => {
           setIsLoading(false);
@@ -696,7 +697,7 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
               margin="dense"
               id={addWorkshopOpen? "title": "newTitle"}
               disabled={isLoading}
-              label={addWorkshopOpen? "Title / Tag" : "Title"}
+              label={addWorkshopOpen? "Title / Tag (This will be the tag for the workshop in MailChimp)" : "Title"}
               className="workshop-title"
               type="title"
               onChange={workshopRecord}
@@ -728,7 +729,7 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
                 margin="dense"
                 id="url"
                 disabled={isLoading}
-                label="URL"
+                label="URL (e.g. my-page-link-here)"
                 className="workshop-url input-cell"
                 onChange={workshopRecord}
                 value={
@@ -745,7 +746,7 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
                     <TextField
                       key={`datetime-${index}`}
                       id="days"
-                      label={`Day* (Local time, GMT ${-(new Date().getTimezoneOffset() / 60)})`}
+                      label={`Day *`}
                       type="datetime-local"
                       value={parseDateString(day.date)}
                       className="workshop-days input-cell"
@@ -765,7 +766,7 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
                   <TextField
                     key="datetime-0"
                     id="days"
-                    label={`Day (Local time, GMT ${-(new Date().getTimezoneOffset() / 60)})`}
+                    label={`Day`}
                     type="datetime-local"
                     className="workshop-days input-cell"
                     onChange={(e) => updateDateTime(e, { date: new Date(), index: 0 }, 0)}
@@ -776,6 +777,7 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
                     error={hasError && !workshopFormInfo.days}
                   />
                 }
+                <Typography style={{ fontWeight: "bold" }}>{`*Convert desired date to local time (GMT ${-(new Date().getTimezoneOffset() / 60)}) before entering`}</Typography>
               </div>
               {workshopFormInfo.days? 
                 <div
@@ -811,35 +813,49 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
             />
             <div
               className={
-                photo
+                photo || workshopFormInfo.imageURL
                   ? "drop-uploader-wrap uploader-has-thumb"
                   : "drop-uploader-wrap"
               }
             >
-              <Dropzone accept="image/*" onDrop={onDrop}>
-                {({ getRootProps, getInputProps, isDragActive }) => (
-                  <div
-                    {...getRootProps()}
-                    className={
-                      isDragActive
-                        ? "drop-new-wrap drag-active"
-                        : "drop-new-wrap"
-                    }
-                  >
-                    <input {...getInputProps()} />
-                    <Typography className="drop-photo-text">Drop Photo</Typography>
-                  </div>
-                )}
-              </Dropzone>
-              {photo || workshopFormInfo.imageURL? 
-                <aside>
-                  <div style={thumb}>
-                    <div style={thumbInner}>
-                      <img src={photo? photo: workshopFormInfo.imageURL? workshopFormInfo.imageURL: CameraIcon} style={img} alt="Thumb" />
+              {photo || workshopFormInfo.imageURL?               
+                <Dropzone accept="image/*" onDrop={onDrop}>
+                  {({ getRootProps, getInputProps, isDragActive }) => (
+                    <div
+                      {...getRootProps()}
+                      className={
+                        isDragActive
+                          ? "drop-existing-wrap drag-active"
+                          : "drop-existing-wrap"
+                      }
+                    >
+                      <input {...getInputProps()} />
+                      <aside>
+                        <div style={thumb}>
+                          <div style={thumbInner}>
+                            <img src={photo? photo: workshopFormInfo.imageURL? workshopFormInfo.imageURL: CameraIcon} style={img} alt="Thumb" />
+                          </div>
+                        </div>
+                      </aside>
                     </div>
-                  </div>
-                </aside>              
-              :null}
+                  )}
+                </Dropzone>:
+                <Dropzone accept="image/*" onDrop={onDrop}>
+                  {({ getRootProps, getInputProps, isDragActive }) => (
+                    <div
+                      {...getRootProps()}
+                      className={
+                        isDragActive
+                          ? "drop-new-wrap drag-active"
+                          : "drop-new-wrap"
+                      }
+                    >
+                      <input {...getInputProps()} />
+                      <Typography className="drop-photo-text">Drop Photo</Typography>
+                    </div>
+                  )}
+                </Dropzone>
+              }
             </div>
           </DialogContent>
         <DialogActions>
