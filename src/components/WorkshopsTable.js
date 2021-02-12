@@ -497,7 +497,7 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
 
   const updateDateTime = (e, day, arrIndex) => {
     const newDateTime = e.target.value;
-    const date = new Date(newDateTime).toGMTString();
+    const date = new Date(newDateTime);
 
     if (workshopFormInfo.days) {
       setWorkshopFormInfo(prevFormInfo => ({
@@ -607,8 +607,8 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
     const dateObj = new Date(date);
 
     if (isValidDate(dateObj)) {
-      const dateStringISO = dateObj.toISOString();
-      const parsedDateString = dateStringISO.substring(0, 16);
+      const dateTimeISO = new Date(dateObj.getTime() - (dateObj.getTimezoneOffset() * 60000)).toISOString();
+      const parsedDateString = dateTimeISO.slice(0, -8);
   
       return parsedDateString;
     }
@@ -619,7 +619,7 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
   }
 
   const addWorkshopDateTime = () => {
-    const date = new Date().toGMTString();
+    const date = new Date();
     const index = workshopFormInfo.days? workshopFormInfo.days.length : 0;
 
     if (workshopFormInfo.days) {
