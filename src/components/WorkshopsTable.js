@@ -604,16 +604,19 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
   };
 
   const parseDateString = (date) => {   
-    const year = new Date(date).getFullYear();   
-    const month = ("0" + (new Date(date).getMonth() + 1)).slice(-2);
-    const day = ("0" + new Date(date).getDate()).slice(-2);
-    const hour = ("0" + new Date(date).getHours()).slice(-2);
-    const minutes = ("0" + new Date(date).getMinutes()).slice(-2);
+    const dateObj = new Date(date);
 
-    const parsedDate = `${year}-${month}-${day}T${hour}:${minutes}`;
-
-    return parsedDate;
+    if (isValidDate(dateObj)) {
+      const dateStringISO = dateObj.toISOString();
+      const parsedDateString = dateStringISO.substring(0, 16);
+  
+      return parsedDateString;
+    }
   };
+
+  const isValidDate = (date) => {
+    return date instanceof Date && !isNaN(date);
+  }
 
   const addWorkshopDateTime = () => {
     const date = new Date().toGMTString();
@@ -761,6 +764,7 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
                           </InputAdornment>
                         ),
                       }: {}}
+                      error={hasError && !workshopFormInfo.days}
                     />
                   )):
                   <TextField
