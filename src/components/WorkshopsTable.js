@@ -585,7 +585,7 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
         + " PST / " +
         convertedLocalDate.toLocaleTimeString("en-US", { timeZone: "America/Los_Angeles", hour: '2-digit', minute:'2-digit' }).replace("AM", "am").replace("PM","pm") 
         + " EST / " +
-        convertedLocalDate.toLocaleTimeString("en-US", { timeZone: "Europe/London", hour: '2-digit', minute:'2-digit' })
+        convertedLocalDate.toLocaleTimeString("en-US", { timeZone: "Europe/London", hour: '2-digit', minute:'2-digit' }).replace("AM", "am").replace("PM","pm")
         + " UK";
 
       if (index > 0) {
