@@ -578,7 +578,15 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
     let dateStr = "";
     days.forEach((day, index) => {
       let convertedLocalDate = new Date(day.date);
-      let parsedLocalDate = convertedLocalDate.toLocaleString("en-US", {timeZone: "America/Toronto"}).replace(",", " @");
+      let parsedLocalDate = 
+        convertedLocalDate.toLocaleDateString("en-US", { timeZone: "America/Toronto" }) 
+        + ": " + 
+        convertedLocalDate.toLocaleTimeString("en-US", { timeZone: "America/Toronto", hour: '2-digit', minute:'2-digit' }).replace("AM", "am").replace("PM","pm")
+        + " PST / " +
+        convertedLocalDate.toLocaleTimeString("en-US", { timeZone: "America/Los_Angeles", hour: '2-digit', minute:'2-digit' }).replace("AM", "am").replace("PM","pm") 
+        + " EST / " +
+        convertedLocalDate.toLocaleTimeString("en-US", { timeZone: "Europe/London", hour: '2-digit', minute:'2-digit' })
+        + " UK";
 
       if (index > 0) {
         dateStr += `, ${parsedLocalDate}`;
