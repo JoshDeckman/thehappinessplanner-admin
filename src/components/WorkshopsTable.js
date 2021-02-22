@@ -578,7 +578,7 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
     let dateStr = "";
     days.forEach((day, index) => {
       let convertedLocalDate = new Date(day.date);
-      let parsedLocalDate = convertedLocalDate.toDateString() + " @ " + convertedLocalDate.toLocaleTimeString();
+      let parsedLocalDate = convertedLocalDate.toLocaleString("en-US", {timeZone: "America/Toronto"}).replace(",", " @");
 
       if (index > 0) {
         dateStr += `, ${parsedLocalDate}`;
