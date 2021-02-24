@@ -94,7 +94,8 @@ function stableSort(array, comparator) {
 }
 
 const headCells = [
-  { id: "title", numeric: false, disablePadding: false, label: "Tag Name" },
+  { id: "title", numeric: false, disablePadding: false, label: "Mailchimp Tag" },
+  { id: "tags", numeric: false, disablePadding: false, label: "Tags" },
   { id: "newTitle", numeric: false, disablePadding: false, label: "Title" },
   { id: "leader", numeric: false, disablePadding: false, label: "Leader" },
   { id: "url", numeric: false, disablePadding: false, label: "URL" },
@@ -984,6 +985,13 @@ export default function WorkshopsTable({
                         className="workshop-table-cell"
                       >
                         {row.title}
+                      </TableCell>
+                      <TableCell
+                        component="th"
+                        align="left"
+                        className="workshop-table-cell"
+                      >
+                        {row.tags}
                       </TableCell>
                       <TableCell
                         component="th"
