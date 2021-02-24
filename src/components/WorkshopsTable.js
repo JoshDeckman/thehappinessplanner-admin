@@ -262,7 +262,17 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export default function WorkshopsTable({ workshopList, handleError, firebase, truncate, addWorkshopOpen, setAddWorkshopOpen, hasError, setError }) {
+export default function WorkshopsTable({ 
+  workshopList, 
+  firebase, 
+  addWorkshopOpen, 
+  setAddWorkshopOpen, 
+  error, 
+  handleError,
+  requiredError,
+  handleRequiredError,
+  happinessTags
+}) {
   const classes = useStyles();
   const [order, setOrder] = useState("asc");
   const [orderBy, setOrderBy] = useState("");
@@ -276,6 +286,8 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
   const [workshopFormInfo, setWorkshopFormInfo] = useState({});
   const [photo, setPhotoPreview] = useState(null);
   const [file, setFile] = useState(null);
+  const [openTagDialog, setTagDialogOpen] = useState(false);
+  const [addTagLoading, setAddTagLoading] = useState(false);
 
   const handleClickOpen = () => {
     if (selected.length === 1) {
@@ -298,7 +310,7 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
     setSelected([]); 
     setPhotoPreview(null);
     setFile(null);
-    setError(false);     
+    handleError(false);     
   };
 
   const handleRequestSort = (event, property) => {
@@ -453,7 +465,7 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
           handleClose();
         });
     } else {
-      handleError("Please complete the required fields");
+      handleRequiredError("Please complete the required fields");
       setIsLoading(false);
     }
   };
@@ -533,8 +545,6 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
         ...prevFormInfo.days.slice(index + 1)
       ]
     }));
-
-    console.log("wfi", workshopFormInfo)
   };
 
   const updateColor = (newColor, colorKey) => {
@@ -662,12 +672,36 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
     setFile(acceptedFiles[0]);
   };
 
-  const handleWorkshopTags = (e, updatedWorkshopTags) => {
-    e.preventDefault();
+  const handleWorkshopTags = (updatedWorkshopTags) => {
     setWorkshopFormInfo(prevFormInfo => ({
       ...prevFormInfo,
       tags: updatedWorkshopTags
     }));
+  };
+
+  const addNewTag = newTag => {
+    setAddTagLoading(true);
+
+    const tagRef = firebase.database().ref('/tags/');
+
+    tagRef.update({
+      [newTag]: {
+        active: true
+      }
+    }).then(() => {
+      setTagDialogOpen(false);
+      setAddTagLoading(false);
+
+      const updatedWorkshopTags = workshopFormInfo.tags? [
+        ...workshopFormInfo.tags,
+        newTag
+      ]: [newTag];
+
+      handleWorkshopTags(updatedWorkshopTags);
+    }).catch((error) => {
+      setAddTagLoading(false);
+      handleError("Tag could not be saved. Please try again.");
+    });
   };
 
   const titleValue = workshopFormInfo.newTitle
@@ -725,11 +759,16 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
                 value={titleValue}
                 fullWidth
                 required
-                error={hasError && !titleValue}
+                error={requiredError && !titleValue}
               />
               <Tags 
                 handleWorkshopTags={handleWorkshopTags} 
                 workshopTags={workshopFormInfo.tags} 
+                happinessTags={happinessTags}
+                addNewTag={addNewTag}
+                setTagDialogOpen={setTagDialogOpen}
+                openTagDialog={openTagDialog}
+                addTagLoading={addTagLoading}
               />
               <TextField
                 autoFocus
@@ -745,7 +784,7 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
                     : ""
                 }
                 required
-                error={hasError && !workshopFormInfo.leader}
+                error={requiredError && !workshopFormInfo.leader}
               />
               <TextField
                 autoFocus
@@ -761,7 +800,7 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
                     : ""
                 }
                 required
-                error={hasError && !workshopFormInfo.url}
+                error={requiredError && !workshopFormInfo.url}
               />
               <div className="datetime-field-container">
                 {workshopFormInfo.days?
@@ -784,7 +823,7 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
                           </InputAdornment>
                         ),
                       }: {}}
-                      error={hasError && !workshopFormInfo.days}
+                      error={requiredError && !workshopFormInfo.days}
                     />
                   )):
                   <TextField
@@ -798,7 +837,7 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
                       shrink: true,
                     }}
                     required
-                    error={hasError && !workshopFormInfo.days}
+                    error={requiredError && !workshopFormInfo.days}
                   />
                 }
                 <Typography style={{ fontWeight: "bold" }}>{`*Convert desired date to local time (GMT ${-(new Date().getTimezoneOffset() / 60)}) before entering`}</Typography>
@@ -822,6 +861,8 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
                      value={workshopFormInfo.colors && workshopFormInfo.colors[colorKey]? `${workshopFormInfo.colors[colorKey]}`: "#00000"}
                      onChange={(color) => updateColor(color, colorKey)}
                      InputProps={{ value: workshopFormInfo.colors && workshopFormInfo.colors[colorKey]? `${workshopFormInfo.colors[colorKey]}`: "#00000" }}
+                     required
+                     error={requiredError && (!workshopFormInfo.colors || workshopFormInfo.colors && !workshopFormInfo.colors[colorKey])}
                    />
                  </div>
                 ))}

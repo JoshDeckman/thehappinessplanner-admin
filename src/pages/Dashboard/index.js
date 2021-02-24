@@ -67,7 +67,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export default function Dashboard({ firebase, exitApp, handleError, hasError, setError }) {
+export default function Dashboard({ firebase, exitApp, handleError, error, handleRequiredError, requiredError }) {
   const classes = useStyles();
 
   const [location, setLocation] = useState("dashboard");
@@ -111,7 +111,9 @@ export default function Dashboard({ firebase, exitApp, handleError, hasError, se
         
                   // Attach Tags to Workshop Event
                   Object.values(tagData).forEach((tagObj, index) => {
-                    if (Object.keys(tagObj["workshops"]).includes(event.id)) {
+                    const tagWorkshopData = tagObj["workshops"];
+
+                    if (tagWorkshopData && Object.keys(tagWorkshopData).includes(event.id)) {
                       workshopTagList.push(Object.keys(tagData)[index]);
                     }
                   });
@@ -125,7 +127,7 @@ export default function Dashboard({ firebase, exitApp, handleError, hasError, se
                   }
                 });
 
-                setTags(tagData);
+                setTags(Object.keys(tagData));
                 setRemovedWorkshopList(removedWorkshopList);
                 setWorkshopList(displayedWorkshopList);
                 setIsLoading(false);
@@ -352,13 +354,15 @@ export default function Dashboard({ firebase, exitApp, handleError, hasError, se
                 <div className="table-holder">
                   <WorkshopsTable
                     workshopList={workshopList}
+                    error={error}
                     handleError={handleError}
+                    requiredError={requiredError}
+                    handleRequiredError={handleRequiredError}
                     firebase={firebase}
                     truncate={truncate}
                     addWorkshopOpen={addWorkshopOpen}
                     setAddWorkshopOpen={setAddWorkshopOpen}
-                    hasError={hasError}
-                    setError={setError}
+                    happinessTags={tags}
                   />
                 </div>
               </>
@@ -370,8 +374,7 @@ export default function Dashboard({ firebase, exitApp, handleError, hasError, se
                     handleError={handleError}
                     firebase={firebase}
                     truncate={truncate}
-                    hasError={hasError}
-                    setError={setError}
+                    error={error}
                   />
                 </div>
               </>
