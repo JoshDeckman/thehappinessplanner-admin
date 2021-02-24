@@ -70,13 +70,14 @@ const useStyles = makeStyles((theme) => ({
 export default function Dashboard({ firebase, exitApp, handleError, hasError, setError }) {
   const classes = useStyles();
 
-  const [location, setLocation] = React.useState("dashboard");
+  const [location, setLocation] = useState("dashboard");
   const [isLoading, setIsLoading] = useState(true);
-  // const [userList, setUserList] = React.useState(null);
-  const [workshopList, setWorkshopList] = React.useState(null);
-  const [removedWorkshopList, setRemovedWorkshopList] = React.useState(null);
-  const [addWorkshopOpen, setAddWorkshopOpen] = React.useState(null);
-
+  // const [userList, setUserList] = useState(null);
+  const [workshopList, setWorkshopList] = useState(null);
+  const [removedWorkshopList, setRemovedWorkshopList] = useState(null);
+  const [addWorkshopOpen, setAddWorkshopOpen] = useState(null);
+  const [tags, setTags] = useState(null);
+  
   useEffect(() => {
     getWorkshopData();
     // getUserData();
@@ -85,23 +86,37 @@ export default function Dashboard({ firebase, exitApp, handleError, hasError, se
 
   const getWorkshopData = () => {
     console.log("Fetching Workshop data...");
-    firebase.database().ref(`/workshops/`)
-      .on("value", (snapshot) => {
-        if (snapshot.val() != null) {
-          const workshopData = snapshot.val();
-          const workshopKeys = Object.keys(workshopData);
-          const workshopList = Object.values(workshopData);
+    firebase.database().ref(`/workshops/`).on("value", (workshopSnap) => {
+      if (workshopSnap.val() != null) {
+        const workshopData = workshopSnap.val();
+        const workshopKeys = Object.keys(workshopData);
+        const workshopList = Object.values(workshopData);
 
-          const removedWorkshopList = [];
-          const displayedWorkshopList = [];
+        getWorkshopPhotos(workshopKeys, workshopList).then((workshopURLs) => {
+          if (workshopURLs && workshopURLs.length > 0) {
+            console.log("Fetching Tag data...");
+            firebase.database().ref(`/tags/`).on("value", (tagSnap) => {
+              if (tagSnap.val() != null) {
+                const tagData = tagSnap.val();
 
-          getWorkshopPhotos(workshopKeys, workshopList)
-            .then((workshopURLs) => {
-              if (workshopURLs && workshopURLs.length > 0) {
+                const removedWorkshopList = [];
+                const displayedWorkshopList = [];
+                
                 workshopList.forEach((event, index) => {
+                  let workshopTagList = [];
+
                   event.id = workshopKeys[index];
                   event.shortInfo = truncate(event.text);
                   event.imageURL = workshopURLs[index];
+        
+                  // Attach Tags to Workshop Event
+                  Object.values(tagData).forEach((tagObj, index) => {
+                    if (Object.keys(tagObj["workshops"]).includes(event.id)) {
+                      workshopTagList.push(Object.keys(tagData)[index]);
+                    }
+                  });
+
+                  event.tags = workshopTagList;
 
                   if (event.removed === "true") {
                     removedWorkshopList.push(event);
@@ -109,22 +124,27 @@ export default function Dashboard({ firebase, exitApp, handleError, hasError, se
                     displayedWorkshopList.push(event);
                   }
                 });
-  
+
+                setTags(tagData);
                 setRemovedWorkshopList(removedWorkshopList);
                 setWorkshopList(displayedWorkshopList);
-
                 setIsLoading(false);
               } else {
-                setWorkshopList([]);
                 setIsLoading(false);
-                handleError("There was an error with the workshop photos. Please refresh and try again.");
+                handleError("An error occured. Please refresh and try again.");
               }
-            })
-        } else {
-          setIsLoading(false);
-          handleError("An error occured. Please refresh and try again.");
-        }
-      });
+            });
+          } else {
+            setWorkshopList([]);
+            setIsLoading(false);
+            handleError("There was an error with the workshop photos. Please refresh and try again.");
+          }
+        });
+      } else {
+        setIsLoading(false);
+        handleError("An error occured. Please refresh and try again.");
+      }
+    });
   };
 
 

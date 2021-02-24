@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import PropTypes from "prop-types";
 import clsx from "clsx";
 
@@ -37,6 +37,7 @@ import MarkdownEditor from "./MarkdownEditor";
 import ColorPicker from 'material-ui-color-picker';
 
 import Dropzone from 'react-dropzone';
+import Tags from "./Tags";
 
 const ReactMarkdown = require('react-markdown/with-html');
 
@@ -263,18 +264,18 @@ const useStyles = makeStyles((theme) => ({
 
 export default function WorkshopsTable({ workshopList, handleError, firebase, truncate, addWorkshopOpen, setAddWorkshopOpen, hasError, setError }) {
   const classes = useStyles();
-  const [order, setOrder] = React.useState("asc");
-  const [orderBy, setOrderBy] = React.useState("");
-  const [selected, setSelected] = React.useState([]);
-  const [page, setPage] = React.useState(0);
-  const [dense] = React.useState(false);
-  const [rowsPerPage, setRowsPerPage] = React.useState(25);
-  const [isLoading, setIsLoading] = React.useState(false);
-  const [editWorkshopOpen, setEditWorkshopOpen] = React.useState(false);
-  const [confirmOpen, setConfirmOpen] = React.useState(false);
-  const [workshopFormInfo, setWorkshopFormInfo] = React.useState({});
-  const [photo, setPhotoPreview] = React.useState(null);
-  const [file, setFile] = React.useState(null);
+  const [order, setOrder] = useState("asc");
+  const [orderBy, setOrderBy] = useState("");
+  const [selected, setSelected] = useState([]);
+  const [page, setPage] = useState(0);
+  const [dense] = useState(false);
+  const [rowsPerPage, setRowsPerPage] = useState(25);
+  const [isLoading, setIsLoading] = useState(false);
+  const [editWorkshopOpen, setEditWorkshopOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [workshopFormInfo, setWorkshopFormInfo] = useState({});
+  const [photo, setPhotoPreview] = useState(null);
+  const [file, setFile] = useState(null);
 
   const handleClickOpen = () => {
     if (selected.length === 1) {
@@ -661,6 +662,14 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
     setFile(acceptedFiles[0]);
   };
 
+  const handleWorkshopTags = (e, updatedWorkshopTags) => {
+    e.preventDefault();
+    setWorkshopFormInfo(prevFormInfo => ({
+      ...prevFormInfo,
+      tags: updatedWorkshopTags
+    }));
+  };
+
   const titleValue = workshopFormInfo.newTitle
     ? workshopFormInfo.newTitle
     : workshopFormInfo.title;
@@ -703,21 +712,25 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
           {addWorkshopOpen? "Add Workshop" : "Edit Workshop"}
         </DialogTitle>
           <DialogContent className="workshop-dialog-form">
-            <TextField
-              autoFocus
-              margin="dense"
-              id={addWorkshopOpen? "title": "newTitle"}
-              disabled={isLoading}
-              label={addWorkshopOpen? "Title / Tag (This will be the tag for the workshop in MailChimp)" : "Title"}
-              className="workshop-title"
-              type="title"
-              onChange={workshopRecord}
-              value={titleValue}
-              fullWidth
-              required
-              error={hasError && !titleValue}
-            />
             <div className="input-table">
+              <TextField
+                autoFocus
+                margin="dense"
+                id={addWorkshopOpen? "title": "newTitle"}
+                disabled={isLoading}
+                label={addWorkshopOpen? "Title / MailChimp Tag" : "Title"}
+                className="workshop-title"
+                type="title"
+                onChange={workshopRecord}
+                value={titleValue}
+                fullWidth
+                required
+                error={hasError && !titleValue}
+              />
+              <Tags 
+                handleWorkshopTags={handleWorkshopTags} 
+                workshopTags={workshopFormInfo.tags} 
+              />
               <TextField
                 autoFocus
                 margin="dense"
@@ -731,7 +744,6 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
                     ? workshopFormInfo.leader
                     : ""
                 }
-                required
                 required
                 error={hasError && !workshopFormInfo.leader}
               />
@@ -802,7 +814,7 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
               : null}
               <div className="color-field-container">
                 {workshopColorKeys.map((colorKey, index) => (
-                 <div className="color-field">
+                 <div key={`color-container-${index}`} className="color-field">
                    <ColorPicker
                      key={`color-${index}`}
                      name="color"
