@@ -264,7 +264,7 @@ export default function Dashboard({ firebase, exitApp, handleError, error, handl
             key={"users-i"}
             onClick={() => handlePageChange("removed-workshops")}
             className={`list-icon ${
-              location === "removed-workshops" ? "selected-menu users" : ""
+              location === "removed-workshops" ? "selected-menu removed-workshops" : ""
             }`}
           >
             <ListItemIcon>
