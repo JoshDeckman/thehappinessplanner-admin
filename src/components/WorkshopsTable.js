@@ -382,8 +382,7 @@ export default function WorkshopsTable({
               url: workshopFormInfo.url
             })
             .then(() => {
-              setIsLoading(false);
-              handleClose();
+              editWorkshopTags(selected[0]);          
             })
             .catch((error) => {
               setIsLoading(false);
@@ -407,14 +406,66 @@ export default function WorkshopsTable({
           url: workshopFormInfo.url
         })
         .then(() => {
-          setIsLoading(false);
-          handleClose();
+          editWorkshopTags(selected[0]);
         })
         .catch((error) => {
           setIsLoading(false);
           handleClose();
           handleError("Workshop could not be updated. Please try again.");
         });
+    }
+  };
+
+  const editWorkshopTags = (workshopId) => {
+    const workshopTagPromises = [];
+    const workshopTagList = [];
+    const newWorkshopTagList = workshopFormInfo.tags;
+
+    // Get Original Workshop Tag List Names
+    Object.values(happinessTags).forEach((tagObj, index) => {
+      const tagWorkshopData = tagObj["workshops"];
+
+      if (tagWorkshopData && Object.keys(tagWorkshopData).includes(workshopId)) {
+        workshopTagList.push(Object.keys(happinessTags)[index]);
+      }
+    });
+
+    // Compare two areas with equals function
+    const equals = (a, b) =>
+      a.length === b.length &&
+      a.every((v, i) => v === b[i]);
+
+    if (equals(workshopTagList, newWorkshopTagList)) {
+      setIsLoading(false);
+      handleClose();
+    } else {
+      // Remove Tags if necessary 
+      workshopTagList.forEach(tag => {
+        if (!newWorkshopTagList.includes(tag)) {
+          let workshopTagRef = firebase.database().ref(`tags/${tag}/workshops/${workshopId}`);
+          workshopTagPromises.push(workshopTagRef.remove());
+        }
+      });
+
+      // Add Tags if necessary
+      newWorkshopTagList.forEach(newTag => {
+        if (!workshopTagList.includes(newTag)) {
+          let workshopTagRef = firebase.database().ref(`tags/${newTag}/workshops/${workshopId}`);
+          workshopTagPromises.push(workshopTagRef.update({
+            timestamp: new Date().getTime()
+          }));
+        }
+      });
+
+      Promise.all(workshopTagPromises).then(() => {
+        setIsLoading(false);
+        handleClose();
+      })
+      .catch((error) => {
+        setIsLoading(false);
+        handleClose();
+        handleError("Workshop could not be added. Please try again.");
+      });
     }
   };
 
@@ -428,10 +479,10 @@ export default function WorkshopsTable({
     
     if (requiredFields) {
       const workshopRef = firebase.database().ref("workshops/");
-
+      
       const newWorkshopRef = workshopRef.push();
       const newWorkshopKey = newWorkshopRef.key;
-  
+      
       const storageRef = firebase.storage().ref();
       const storageWorkshopRef = storageRef.child(`workshops/${newWorkshopKey}/image.jpg`);
 
@@ -451,8 +502,29 @@ export default function WorkshopsTable({
               url: workshopFormInfo.url
             })
             .then(() => {
-              setIsLoading(false);
-              handleClose();
+              if (workshopFormInfo.tags && workshopFormInfo.tags.length > 0) {
+                const workshopTagPromises = [];
+
+                workshopFormInfo.tags.forEach(tag => {
+                  let workshopTagRef = firebase.database().ref(`tags/${tag}/workshops/${newWorkshopKey}`);
+                  workshopTagPromises.push(workshopTagRef.update({
+                    timestamp: new Date().getTime()
+                  }));
+                });
+                
+                Promise.all(workshopTagPromises).then(() => {
+                  setIsLoading(false);
+                  handleClose();
+                })
+                .catch((error) => {
+                  setIsLoading(false);
+                  handleClose();
+                  handleError("Workshop could not be added. Please try again.");
+                });
+              } else {
+                setIsLoading(false);
+                handleClose();
+              }              
             })
             .catch((error) => {
               setIsLoading(false);
@@ -621,6 +693,22 @@ export default function WorkshopsTable({
     }
 
     return colorStr;
+  };
+
+  const parseTags = (tags) => {
+    let tagStr = "";
+
+    if (tags.length > 0) {
+      tags.forEach((tag, index) => {
+        if (index < tags.length - 1) {
+          tagStr += `${tag}, `;
+        } else {
+          tagStr += tag;
+        }
+      });
+    }
+
+    return tagStr;
   };
 
   const parseDateString = (date) => {   
@@ -991,7 +1079,7 @@ export default function WorkshopsTable({
                         align="left"
                         className="workshop-table-cell"
                       >
-                        {row.tags}
+                        {parseTags(row.tags)}
                       </TableCell>
                       <TableCell
                         component="th"

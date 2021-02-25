@@ -76,7 +76,7 @@ export default function Dashboard({ firebase, exitApp, handleError, error, handl
   const [workshopList, setWorkshopList] = useState(null);
   const [removedWorkshopList, setRemovedWorkshopList] = useState(null);
   const [addWorkshopOpen, setAddWorkshopOpen] = useState(null);
-  const [tags, setTags] = useState(null);
+  const [happinessTags, setHappinessTags] = useState(null);
   
   useEffect(() => {
     getWorkshopData();
@@ -127,7 +127,7 @@ export default function Dashboard({ firebase, exitApp, handleError, error, handl
                   }
                 });
 
-                setTags(Object.keys(tagData));
+                setHappinessTags(tagData);
                 setRemovedWorkshopList(removedWorkshopList);
                 setWorkshopList(displayedWorkshopList);
                 setIsLoading(false);
@@ -362,7 +362,7 @@ export default function Dashboard({ firebase, exitApp, handleError, error, handl
                     truncate={truncate}
                     addWorkshopOpen={addWorkshopOpen}
                     setAddWorkshopOpen={setAddWorkshopOpen}
-                    happinessTags={tags}
+                    happinessTags={happinessTags}
                   />
                 </div>
               </>

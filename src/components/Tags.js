@@ -47,12 +47,14 @@ const Tags = ({
     addNewTag(newTag);
   };
 
+  const happinessTagNames = Object.keys(happinessTags);
+
   return (
     <div className={classes.root}>
       <Autocomplete
         multiple
         id="happiness-tags"
-        options={happinessTags}
+        options={happinessTagNames}
         getOptionLabel={(option) => option}
         value={workshopTags? workshopTags: []}
         renderInput={(params) => (
@@ -65,7 +67,7 @@ const Tags = ({
         )}
         onChange={(e, updatedTags) => {
           if (updatedTags.length > 0) {
-            if (happinessTags.includes(updatedTags[updatedTags.length - 1])) {
+            if (happinessTagNames.includes(updatedTags[updatedTags.length - 1])) {
               handleWorkshopTags(updatedTags);
             } else {
               // timeout to avoid instant validation of the dialog's form
