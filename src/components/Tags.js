@@ -82,9 +82,11 @@ const Tags = ({
           }
         }}
         filterOptions={(options, params) => {
-          const filtered = filter(options, params);
+          // Do not allow user to add duplicate tags, remove tags from list that are already chosen
+          const filteredWorkshopTagOptions = options.filter(tag => !workshopTags.includes(tag));
+          const filtered = filter(filteredWorkshopTagOptions, params);
 
-          if (params.inputValue !== '') {
+          if (params.inputValue !== '' && !workshopTags.includes(params.inputValue)) {
             filtered.push(`Add "${params.inputValue}"`);
           }
 
