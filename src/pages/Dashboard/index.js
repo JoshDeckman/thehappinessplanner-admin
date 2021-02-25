@@ -78,6 +78,7 @@ export default function Dashboard({ firebase, exitApp, handleError, error, handl
   const [workshopList, setWorkshopList] = useState(null);
   const [removedWorkshopList, setRemovedWorkshopList] = useState(null);
   const [addWorkshopOpen, setAddWorkshopOpen] = useState(null);
+  const [addTagOpen, setAddTagOpen] = useState(null);
   const [happinessTags, setHappinessTags] = useState(null);
   
   useEffect(() => {
@@ -294,6 +295,8 @@ export default function Dashboard({ firebase, exitApp, handleError, error, handl
               ? "workshops"
               : location === "removed-workshops"
               ? "Removed Workshops"
+              : location === "tags"
+              ? "tags"
               : null
           }`}
         >
@@ -306,6 +309,8 @@ export default function Dashboard({ firebase, exitApp, handleError, error, handl
               ? "workshops"
               : location === "removed-workshops"
               ? "removed workshops"
+              : location === "tags"
+              ? "tags"
               : null}
           </h2>
           {location === "workshops" ? (
@@ -318,6 +323,19 @@ export default function Dashboard({ firebase, exitApp, handleError, error, handl
                 startIcon={<AddIcon />}
               >
                 Add Workshop
+              </Button>
+            </div>
+          ) : null}
+          {location === "tags" ? (
+            <div className="page-actions">
+              <Button
+                variant="contained"
+                className="tag-add-btn"
+                disabled={isLoading ? true : false}
+                onClick={() => setAddTagOpen(true)}
+                startIcon={<AddIcon />}
+              >
+                Add Tag
               </Button>
             </div>
           ) : null}
@@ -354,6 +372,13 @@ export default function Dashboard({ firebase, exitApp, handleError, error, handl
                   >
                     <h1>{numberWithCommas(removedWorkshopList.length)}</h1>
                     <h3>Removed Workshops</h3>
+                  </Button>
+                  <Button
+                    className="count-icon tags"
+                    onClick={() => handlePageChange("tags")}
+                  >
+                    <h1>{numberWithCommas(Object.keys(happinessTags).length)}</h1>
+                    <h3>Tags</h3>
                   </Button>
                 </div>
               </>

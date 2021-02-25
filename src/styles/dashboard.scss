@@ -30,6 +30,13 @@
         color: #000;
       }
     }
+    &.tags {
+      border-bottom: 2px solid #f8aec4;
+      background-color: #d8f8ff;
+      h2 {
+        color: #000;
+      }
+    }
     h2 {
       float: left;
     }
@@ -40,6 +47,14 @@
         border-radius: 20px;
         &:hover {
           background-color: #b0d9eb;
+        }
+      }
+      .tag-add-btn {
+        background-color: #f8aec4;
+        border-radius: 20px;
+        color: #fff;
+        &:hover {
+          background-color: #fac6d5;
         }
       }
     }
@@ -109,6 +124,18 @@
       }
       &:hover {
         background-color: #f8aec4;
+        h1,h3 {
+          color: #fff;
+        }
+      }
+    }
+    &.tags {
+      border: 5px solid #9ad2d1;
+      h1,h3 {
+        color: #9ad2d1;
+      }
+      &:hover {
+        background-color: #9ad2d1;
         h1,h3 {
           color: #fff;
         }
