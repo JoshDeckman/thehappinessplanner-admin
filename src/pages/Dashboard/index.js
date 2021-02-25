@@ -400,6 +400,8 @@ export default function Dashboard({ firebase, exitApp, handleError, error, handl
                     workshopList={workshopList}
                     handleError={handleError}
                     firebase={firebase}
+                    requiredError={requiredError}
+                    handleRequiredError={handleRequiredError}
                   />
                 </div>
               </>

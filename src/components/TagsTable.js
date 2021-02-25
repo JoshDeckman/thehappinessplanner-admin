@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 import PropTypes from 'prop-types';
 
@@ -24,7 +24,10 @@ import Dialog from '@material-ui/core/Dialog';
 import DialogActions from '@material-ui/core/DialogActions';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import Button from '@material-ui/core/Button';
+import TextField from "@material-ui/core/TextField";
+import DialogContent from "@material-ui/core/DialogContent";
 
+import EditIcon from "@material-ui/icons/Edit";
 import DeleteIcon from '@material-ui/icons/Delete';
 
 function descendingComparator(a, b, orderBy) {
@@ -143,21 +146,35 @@ const EnhancedTableToolbar = (props) => {
       })}
     >
       {numSelected > 0 ? (
-        <Typography className={classes.title} color="inherit" variant="subtitle1" component="div">
-          ({numSelected}) Tags Selected
+        <Typography
+          className={classes.title}
+          color="inherit"
+          variant="subtitle1"
+          component="div"
+        >
+          ({numSelected}) Tag(s) Selected
         </Typography>
-      ) : (null
-      )}
+      ) : null}
+
+      {numSelected === 1? (
+        <>
+          <Tooltip title="Edit">
+            <IconButton aria-label="edit" onClick={props.handleClickOpen}>
+              <EditIcon />
+            </IconButton>
+          </Tooltip>
+        </>
+      ) : null}
 
       {numSelected > 0 ? (
-        <Tooltip title="Delete">
-          <IconButton aria-label="delete" onClick={props.askToDelete}>
-            <DeleteIcon />
-          </IconButton>
-        </Tooltip>
-      ) : (
-       null
-      )}
+        <>
+          <Tooltip title="Delete">
+            <IconButton aria-label="delete" onClick={props.askToDelete}>
+              <DeleteIcon />
+            </IconButton>
+          </Tooltip>
+        </>
+      ) : null}
     </Toolbar>
   );
 };
@@ -190,17 +207,62 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export default function TagsTable({ tagList, workshopList, handleError, firebase }) {
+export default function TagsTable({ tagList, workshopList, handleError, firebase, requiredError, handleRequiredError }) {
   const classes = useStyles();
-  const [order, setOrder] = React.useState('asc');
-  const [orderBy, setOrderBy] = React.useState('');
-  const [selected, setSelected] = React.useState([]);
-  const [page, setPage] = React.useState(0);
-  const [dense] = React.useState(false);
-  const [rowsPerPage, setRowsPerPage] = React.useState(25);
-  const [confirmOpen, setConfirmOpen] = React.useState(false);
-  const [isLoading, setIsLoading] = React.useState(false);
+  const [order, setOrder] = useState('asc');
+  const [orderBy, setOrderBy] = useState('');
+  const [selected, setSelected] = useState([]);
+  const [editTagName, setEditTagName] = useState("");
+  const [page, setPage] = useState(0);
+  const [dense] = useState(false);
+  const [rowsPerPage, setRowsPerPage] = useState(25);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [editTagOpen, setEditTagOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const tagNames = Object.keys(tagList);
+
+  const handleEditTag = () => {
+    setIsLoading(true);
+    const selectedTagRef = firebase.database().ref(`tags/${selected[0]}/`);
+    const updatedTagRef = firebase.database().ref(`tags/${editTagName}/`);
+
+    if (selected[0] === editTagName) {
+      // Tag Name is the same, do not allow edit
+      handleRequiredError("Please enter a new tag name");
+      setIsLoading(false);
+    } else {
+      selectedTagRef.once('value').then((snapshot) => {
+        const tagData = snapshot.val();
+  
+        // Copy data to node with updated name
+        updatedTagRef.update(tagData).then(() => {
+          // Remove previous node
+          selectedTagRef.remove().then(() => {
+            setIsLoading(false);
+            setSelected([]);
+            setEditTagOpen(false);
+          })
+          .catch(err => {
+            setIsLoading(false);
+            setSelected([]);
+            setEditTagOpen(false);
+            handleError("Tag could not be edited. Please try again.");
+          });
+        })
+        .catch(err => {
+          setIsLoading(false);
+          setSelected([]);
+          setEditTagOpen(false);
+          handleError("Tag could not be edited. Please try again.");
+        });
+      });  
+    }
+  };
+
+  const tagRecord = (e) => {
+    console.log(e.target.value);
+    setEditTagName(e.target.value);
+  };
 
   const handleRequestSort = (event, property) => {
     const isAsc = orderBy === property && order === 'asc';
@@ -235,6 +297,13 @@ export default function TagsTable({ tagList, workshopList, handleError, firebase
     }
 
     setSelected(newSelected);
+  };
+
+  const handleClickOpen = () => {
+    if (selected.length === 1) {
+      setEditTagName(selected[0]);
+      setEditTagOpen(true);
+    }
   };
 
   const handleChangePage = (event, newPage) => {
@@ -279,6 +348,12 @@ export default function TagsTable({ tagList, workshopList, handleError, firebase
     setConfirmOpen(false);
   }
 
+  const closeEditTagOpen = () => {
+    setEditTagName('');
+    setSelected([]);
+    setEditTagOpen(false);
+  };
+
   const getWorkshops = tagName => {
     const tagData = tagList[tagName];
     let workshopTitles = "";
@@ -305,7 +380,7 @@ export default function TagsTable({ tagList, workshopList, handleError, firebase
   return (
     <div className={classes.root}>
 
-      <Dialog open={confirmOpen} onClose={isLoading? null: closeAskforDelete} aria-labelledby="form-dialog-title" className="workshop-dialog">
+      <Dialog open={confirmOpen} onClose={isLoading? null: closeAskforDelete} aria-labelledby="delete-tag-dialog" className="workshop-dialog">
         <DialogTitle id="form-dialog-title">{isLoading? `(${selected.length}) tags being deleted...`: `(${selected.length}) tags to be deleted`}</DialogTitle>
         <DialogActions>
           <Button onClick={closeAskforDelete} disabled={isLoading} color="primary">
@@ -317,8 +392,36 @@ export default function TagsTable({ tagList, workshopList, handleError, firebase
         </DialogActions>
       </Dialog>
 
+      <Dialog open={editTagOpen} onClose={isLoading? null: closeEditTagOpen} aria-labelledby="edit-tag-dialog" className="workshop-dialog">
+        <DialogTitle id="form-dialog-title">{isLoading? `(${selected.length}) editing tag...`: `Edit Tag`}</DialogTitle>
+        <DialogContent className="workshop-dialog-form">
+          <TextField
+            autoFocus
+            margin="dense"
+            id="edit-tag"
+            disabled={isLoading}
+            label="Edit Tag"
+            className="workshop-title"
+            type="tag name"
+            onChange={tagRecord}
+            value={editTagName}
+            fullWidth
+            required
+            error={requiredError && !editTagName}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeEditTagOpen} disabled={isLoading} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={handleEditTag} disabled={isLoading} color="primary">
+            Save
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       <Paper className={classes.paper}>
-        <EnhancedTableToolbar numSelected={selected.length} askToDelete={askToDelete}/>
+        <EnhancedTableToolbar numSelected={selected.length} askToDelete={askToDelete} handleClickOpen={handleClickOpen} />
         <TableContainer>
           <Table
             stickyHeader
