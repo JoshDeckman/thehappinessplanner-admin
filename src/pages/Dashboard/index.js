@@ -427,6 +427,8 @@ export default function Dashboard({ firebase, exitApp, handleError, error, handl
                     firebase={firebase}
                     requiredError={requiredError}
                     handleRequiredError={handleRequiredError}
+                    addTagOpen={addTagOpen}
+                    setAddTagOpen={setAddTagOpen}
                   />
                 </div>
               </>

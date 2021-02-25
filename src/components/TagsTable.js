@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 
 import PropTypes from 'prop-types';
 
@@ -85,7 +85,10 @@ function EnhancedTableHead(props) {
             className="table-header-text"
             sortDirection={orderBy === headCell.id ? order : false}
           >
-            <TableSortLabel
+            <Typography>
+              {headCell.label}
+            </Typography>
+            {/* <TableSortLabel
               active={orderBy === headCell.id}
               direction={orderBy === headCell.id ? order : 'asc'}
               onClick={createSortHandler(headCell.id)}
@@ -96,7 +99,7 @@ function EnhancedTableHead(props) {
                   {order === 'desc' ? 'sorted descending' : 'sorted ascending'}
                 </span>
               ) : null}
-            </TableSortLabel>
+            </TableSortLabel> */}
           </TableCell>
         ))}
       </TableRow>
@@ -159,7 +162,7 @@ const EnhancedTableToolbar = (props) => {
       {numSelected === 1? (
         <>
           <Tooltip title="Edit">
-            <IconButton aria-label="edit" onClick={props.handleClickOpen}>
+            <IconButton aria-label="edit" onClick={props.handleClickOpenEdit}>
               <EditIcon />
             </IconButton>
           </Tooltip>
@@ -207,19 +210,19 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export default function TagsTable({ tagList, workshopList, handleError, firebase, requiredError, handleRequiredError }) {
+export default function TagsTable({ tagList, workshopList, handleError, firebase, requiredError, handleRequiredError, addTagOpen, setAddTagOpen }) {
   const classes = useStyles();
   const [order, setOrder] = useState('asc');
   const [orderBy, setOrderBy] = useState('');
   const [selected, setSelected] = useState([]);
   const [editTagName, setEditTagName] = useState("");
+  const [addTagName, setAddTagName] = useState("");
   const [page, setPage] = useState(0);
   const [dense] = useState(false);
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [editTagOpen, setEditTagOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const tagNames = Object.keys(tagList);
 
   const handleEditTag = () => {
     setIsLoading(true);
@@ -259,9 +262,37 @@ export default function TagsTable({ tagList, workshopList, handleError, firebase
     }
   };
 
-  const tagRecord = (e) => {
-    console.log(e.target.value);
+  const handleAddTag = () => {
+    setIsLoading(true);
+    if (addTagName.length > 0) {
+      const addTagRef = firebase.database().ref(`tags/${addTagName}/`);
+
+      addTagRef.update({
+        active: true
+      })
+      .then(() => {
+        setIsLoading(false);
+        setAddTagOpen(false);
+        setAddTagName('');
+      })
+      .catch((err) => {
+        setIsLoading(false);
+        setAddTagOpen(false);
+        setAddTagName('');
+        handleRequiredError("Could not add tag. Please try again.");
+      });
+    } else {
+      setIsLoading(false);
+      handleRequiredError("Please enter a tag name");
+    }
+  };
+
+  const editTagRecord = (e) => {
     setEditTagName(e.target.value);
+  };
+
+  const addTagRecord = (e) => {
+    setAddTagName(e.target.value);
   };
 
   const handleRequestSort = (event, property) => {
@@ -272,7 +303,7 @@ export default function TagsTable({ tagList, workshopList, handleError, firebase
 
   const handleSelectAllClick = (event) => {
     if (event.target.checked) {
-      const newSelecteds = tagNames.map((n) => n);
+      const newSelecteds = Object.keys(tagList).map((n) => n);
       setSelected(newSelecteds);
       return;
     }
@@ -299,8 +330,9 @@ export default function TagsTable({ tagList, workshopList, handleError, firebase
     setSelected(newSelected);
   };
 
-  const handleClickOpen = () => {
+  const handleClickOpenEdit = () => {
     if (selected.length === 1) {
+      setAddTagName('');
       setEditTagName(selected[0]);
       setEditTagOpen(true);
     }
@@ -348,10 +380,12 @@ export default function TagsTable({ tagList, workshopList, handleError, firebase
     setConfirmOpen(false);
   }
 
-  const closeEditTagOpen = () => {
+  const closeTagOpen = () => {
     setEditTagName('');
+    setAddTagName('');
     setSelected([]);
     setEditTagOpen(false);
+    setAddTagOpen(false);
   };
 
   const getWorkshops = tagName => {
@@ -392,8 +426,8 @@ export default function TagsTable({ tagList, workshopList, handleError, firebase
         </DialogActions>
       </Dialog>
 
-      <Dialog open={editTagOpen} onClose={isLoading? null: closeEditTagOpen} aria-labelledby="edit-tag-dialog" className="workshop-dialog">
-        <DialogTitle id="form-dialog-title">{isLoading? `(${selected.length}) editing tag...`: `Edit Tag`}</DialogTitle>
+      <Dialog open={editTagOpen} onClose={isLoading? null: closeTagOpen} aria-labelledby="edit-tag-dialog" className="workshop-dialog">
+        <DialogTitle id="edit-tag-dialog-title">{isLoading? `editing tag...`: `Edit Tag`}</DialogTitle>
         <DialogContent className="workshop-dialog-form">
           <TextField
             autoFocus
@@ -403,7 +437,7 @@ export default function TagsTable({ tagList, workshopList, handleError, firebase
             label="Edit Tag"
             className="workshop-title"
             type="tag name"
-            onChange={tagRecord}
+            onChange={editTagRecord}
             value={editTagName}
             fullWidth
             required
@@ -411,7 +445,7 @@ export default function TagsTable({ tagList, workshopList, handleError, firebase
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={closeEditTagOpen} disabled={isLoading} color="primary">
+          <Button onClick={closeTagOpen} disabled={isLoading} color="primary">
             Cancel
           </Button>
           <Button onClick={handleEditTag} disabled={isLoading} color="primary">
@@ -420,8 +454,36 @@ export default function TagsTable({ tagList, workshopList, handleError, firebase
         </DialogActions>
       </Dialog>
 
+      <Dialog open={addTagOpen} onClose={isLoading? null: closeTagOpen} aria-labelledby="add-tag-dialog" className="workshop-dialog">
+        <DialogTitle id="add-tag-dialog-title">{isLoading? `adding tag...`: `Add Tag`}</DialogTitle>
+        <DialogContent className="workshop-dialog-form">
+          <TextField
+            autoFocus
+            margin="dense"
+            id="add-tag"
+            disabled={isLoading}
+            label="Add Tag"
+            className="workshop-title"
+            type="tag name"
+            onChange={addTagRecord}
+            value={addTagName}
+            fullWidth
+            required
+            error={requiredError && !addTagName}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeTagOpen} disabled={isLoading} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={handleAddTag} disabled={isLoading} color="primary">
+            Save
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       <Paper className={classes.paper}>
-        <EnhancedTableToolbar numSelected={selected.length} askToDelete={askToDelete} handleClickOpen={handleClickOpen} />
+        <EnhancedTableToolbar numSelected={selected.length} askToDelete={askToDelete} handleClickOpenEdit={handleClickOpenEdit} />
         <TableContainer>
           <Table
             stickyHeader
@@ -437,10 +499,10 @@ export default function TagsTable({ tagList, workshopList, handleError, firebase
               orderBy={orderBy}
               onSelectAllClick={handleSelectAllClick}
               onRequestSort={handleRequestSort}
-              rowCount={tagNames.length}
+              rowCount={Object.keys(tagList).length}
             />
             <TableBody>
-              {stableSort(tagNames, getComparator(order, orderBy))
+              {stableSort(Object.keys(tagList), getComparator(order, orderBy))
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                 .map((row, index) => {
                   const isItemSelected = isSelected(row);
@@ -453,7 +515,7 @@ export default function TagsTable({ tagList, workshopList, handleError, firebase
                       role="checkbox"
                       aria-checked={isItemSelected}
                       tabIndex={-1}
-                      key={`${row.id}-${index}`}
+                      key={`${row}-${index}`}
                       selected={isItemSelected}
                     >
                     <TableCell padding="checkbox">
@@ -474,7 +536,7 @@ export default function TagsTable({ tagList, workshopList, handleError, firebase
         <TablePagination
           rowsPerPageOptions={[25, 50, 100]}
           component="div"
-          count={tagNames.length}
+          count={Object.keys(tagList).length}
           rowsPerPage={rowsPerPage}
           page={page}
           onChangePage={handleChangePage}
