@@ -27,7 +27,6 @@ import Button from '@material-ui/core/Button';
 
 import DeleteIcon from '@material-ui/icons/Delete';
 
-
 function descendingComparator(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
     return -1;
@@ -55,8 +54,8 @@ function stableSort(array, comparator) {
 };
 
 const headCells = [
-  { id: 'id', numeric: false, disablePadding: true, label: 'User ID' },
-  { id: 'access-level', numeric: false, disablePadding: true, label: 'Access Level' },
+  { id: 'tagName', numeric: false, disablePadding: true, label: 'Tag Name' },
+  { id: 'workshops', numeric: false, disablePadding: true, label: 'Workshops' },
 ];
 
 function EnhancedTableHead(props) {
@@ -73,7 +72,7 @@ function EnhancedTableHead(props) {
             indeterminate={numSelected > 0 && numSelected < rowCount}
             checked={rowCount > 0 && numSelected === rowCount}
             onChange={onSelectAllClick}
-            inputProps={{ 'aria-label': 'select all users' }}
+            inputProps={{ 'aria-label': 'select all tags' }}
           />
         </TableCell>
         {headCells.map((headCell) => (
@@ -145,7 +144,7 @@ const EnhancedTableToolbar = (props) => {
     >
       {numSelected > 0 ? (
         <Typography className={classes.title} color="inherit" variant="subtitle1" component="div">
-          ({numSelected}) Users Selected
+          ({numSelected}) Tags Selected
         </Typography>
       ) : (null
       )}
@@ -191,16 +190,17 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export default function UsersTable({ userList }) {
+export default function TagsTable({ tagList, workshopList, handleError, firebase }) {
   const classes = useStyles();
   const [order, setOrder] = React.useState('asc');
-  const [orderBy, setOrderBy] = React.useState('calories');
+  const [orderBy, setOrderBy] = React.useState('');
   const [selected, setSelected] = React.useState([]);
   const [page, setPage] = React.useState(0);
   const [dense] = React.useState(false);
   const [rowsPerPage, setRowsPerPage] = React.useState(25);
   const [confirmOpen, setConfirmOpen] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
+  const tagNames = Object.keys(tagList);
 
   const handleRequestSort = (event, property) => {
     const isAsc = orderBy === property && order === 'asc';
@@ -210,7 +210,7 @@ export default function UsersTable({ userList }) {
 
   const handleSelectAllClick = (event) => {
     if (event.target.checked) {
-      const newSelecteds = userList.map((n) => n.id);
+      const newSelecteds = tagNames.map((n) => n);
       setSelected(newSelecteds);
       return;
     }
@@ -250,7 +250,25 @@ export default function UsersTable({ userList }) {
 
   const handleDelete = () => {
     setIsLoading(true);
-    //TO DO: Add Delete Workshop Function
+    
+    const deleteTagPromises = [];
+
+    selected.forEach(selectedTagName => {
+      let workshopTagRef = firebase.database().ref(`tags/${selectedTagName}/`);
+      deleteTagPromises.push(workshopTagRef.remove());
+    });
+
+    Promise.all(deleteTagPromises).then(() => {
+      setIsLoading(false);
+      setSelected([]);
+      closeAskforDelete();
+    })
+    .catch(err => {
+      setIsLoading(false);
+      setSelected([]);
+      closeAskforDelete();
+      handleError("Tag(s) could not be removed. Please try again.");
+    });
   }
 
   const askToDelete = () => {
@@ -261,12 +279,34 @@ export default function UsersTable({ userList }) {
     setConfirmOpen(false);
   }
 
+  const getWorkshops = tagName => {
+    const tagData = tagList[tagName];
+    let workshopTitles = "";
+
+    if (tagData.workshops) {
+      const workshopIds = Object.keys(tagData.workshops);
+  
+      workshopIds.forEach((workshopId, index) => {
+        const workshopData = workshopList.find(workshopData => workshopData.id === workshopId);
+  
+        if (workshopData) {
+          if (index < workshopIds.length - 1) {
+            workshopTitles += `${workshopData.title}, `
+          } else {
+            workshopTitles += workshopData.title;
+          }
+        }
+      });
+    }
+    
+    return workshopTitles;
+  };
 
   return (
     <div className={classes.root}>
 
       <Dialog open={confirmOpen} onClose={isLoading? null: closeAskforDelete} aria-labelledby="form-dialog-title" className="workshop-dialog">
-        <DialogTitle id="form-dialog-title">{isLoading? `(${selected.length}) users being deleted...`: `(${selected.length}) users deleted`}</DialogTitle>
+        <DialogTitle id="form-dialog-title">{isLoading? `(${selected.length}) tags being deleted...`: `(${selected.length}) tags to be deleted`}</DialogTitle>
         <DialogActions>
           <Button onClick={closeAskforDelete} disabled={isLoading} color="primary">
             Cancel
@@ -294,23 +334,23 @@ export default function UsersTable({ userList }) {
               orderBy={orderBy}
               onSelectAllClick={handleSelectAllClick}
               onRequestSort={handleRequestSort}
-              rowCount={userList.length}
+              rowCount={tagNames.length}
             />
             <TableBody>
-              {stableSort(userList, getComparator(order, orderBy))
+              {stableSort(tagNames, getComparator(order, orderBy))
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                 .map((row, index) => {
-                  const isItemSelected = isSelected(row.id);
+                  const isItemSelected = isSelected(row);
                   const labelId = `enhanced-table-checkbox-${index}`;
 
                   return (
                     <TableRow
                       hover
-                      onClick={(event) => handleClick(event, row.id)}
+                      onClick={(event) => handleClick(event, row)}
                       role="checkbox"
                       aria-checked={isItemSelected}
                       tabIndex={-1}
-                      key={row.id}
+                      key={`${row.id}-${index}`}
                       selected={isItemSelected}
                     >
                     <TableCell padding="checkbox">
@@ -319,8 +359,8 @@ export default function UsersTable({ userList }) {
                           inputProps={{ 'aria-labelledby': labelId }}
                         />
                       </TableCell>
-                      <TableCell component="th" align="left">{row.id}</TableCell>
-                      <TableCell align="left">{row.accessLevel}</TableCell>
+                      <TableCell component="th" align="left">{row}</TableCell>
+                      <TableCell align="left">{getWorkshops(row)}</TableCell>
                     </TableRow>
                   );
                 })}
@@ -331,7 +371,7 @@ export default function UsersTable({ userList }) {
         <TablePagination
           rowsPerPageOptions={[25, 50, 100]}
           component="div"
-          count={userList.length}
+          count={tagNames.length}
           rowsPerPage={rowsPerPage}
           page={page}
           onChangePage={handleChangePage}

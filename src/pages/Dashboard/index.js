@@ -15,6 +15,7 @@ import DashboardIcon from "@material-ui/icons/Dashboard";
 import TrashIcon from '@material-ui/icons/DeleteOutlineOutlined';
 import ExitToAppIcon from "@material-ui/icons/ExitToApp";
 import AddIcon from '@material-ui/icons/Add';
+import TagIcon from '@material-ui/icons/LoyaltyOutlined';
 
 import WorkshopsTable from "../../components/WorkshopsTable";
 import RemovedWorkshopsTable from "../../components/RemovedWorkshopsTable";
@@ -24,6 +25,7 @@ import HappinessLogo from "../../images/happiness-h-logo.png";
 import WorkshopLogo from "../../images/laptop-w.svg";
 
 import "../../styles/dashboard.scss";
+import TagsTable from "../../components/TagsTable";
 
 const drawerWidth = 240;
 
@@ -246,6 +248,18 @@ export default function Dashboard({ firebase, exitApp, handleError, error, handl
           </ListItem> */}
           <ListItem
             button
+            key={"tags-i"}
+            onClick={() => handlePageChange("tags")}
+            className={`list-icon ${
+              location === "tags" ? "selected-menu tags" : ""
+            }`}
+          >
+            <ListItemIcon>
+              <TagIcon />
+            </ListItemIcon>
+          </ListItem>
+          <ListItem
+            button
             key={"users-i"}
             onClick={() => handlePageChange("removed-workshops")}
             className={`list-icon ${
@@ -375,6 +389,17 @@ export default function Dashboard({ firebase, exitApp, handleError, error, handl
                     firebase={firebase}
                     truncate={truncate}
                     error={error}
+                  />
+                </div>
+              </>
+            ) : location === "tags" ? (
+              <>
+                <div className="table-holder">
+                  <TagsTable
+                    tagList={happinessTags}
+                    workshopList={workshopList}
+                    handleError={handleError}
+                    firebase={firebase}
                   />
                 </div>
               </>
