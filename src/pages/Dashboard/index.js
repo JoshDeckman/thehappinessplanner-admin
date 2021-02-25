@@ -15,6 +15,7 @@ import DashboardIcon from "@material-ui/icons/Dashboard";
 import TrashIcon from '@material-ui/icons/DeleteOutlineOutlined';
 import ExitToAppIcon from "@material-ui/icons/ExitToApp";
 import AddIcon from '@material-ui/icons/Add';
+import TagIcon from '@material-ui/icons/LoyaltyOutlined';
 
 import WorkshopsTable from "../../components/WorkshopsTable";
 import RemovedWorkshopsTable from "../../components/RemovedWorkshopsTable";
@@ -24,6 +25,7 @@ import HappinessLogo from "../../images/happiness-h-logo.png";
 import WorkshopLogo from "../../images/laptop-w.svg";
 
 import "../../styles/dashboard.scss";
+import TagsTable from "../../components/TagsTable";
 
 const drawerWidth = 240;
 
@@ -67,16 +69,18 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export default function Dashboard({ firebase, exitApp, handleError, hasError, setError }) {
+export default function Dashboard({ firebase, exitApp, handleError, error, handleRequiredError, requiredError }) {
   const classes = useStyles();
 
-  const [location, setLocation] = React.useState("dashboard");
+  const [location, setLocation] = useState("dashboard");
   const [isLoading, setIsLoading] = useState(true);
-  // const [userList, setUserList] = React.useState(null);
-  const [workshopList, setWorkshopList] = React.useState(null);
-  const [removedWorkshopList, setRemovedWorkshopList] = React.useState(null);
-  const [addWorkshopOpen, setAddWorkshopOpen] = React.useState(null);
-
+  // const [userList, setUserList] = useState(null);
+  const [workshopList, setWorkshopList] = useState(null);
+  const [removedWorkshopList, setRemovedWorkshopList] = useState(null);
+  const [addWorkshopOpen, setAddWorkshopOpen] = useState(null);
+  const [addTagOpen, setAddTagOpen] = useState(null);
+  const [happinessTags, setHappinessTags] = useState(null);
+  
   useEffect(() => {
     getWorkshopData();
     // getUserData();
@@ -85,23 +89,39 @@ export default function Dashboard({ firebase, exitApp, handleError, hasError, se
 
   const getWorkshopData = () => {
     console.log("Fetching Workshop data...");
-    firebase.database().ref(`/workshops/`)
-      .on("value", (snapshot) => {
-        if (snapshot.val() != null) {
-          const workshopData = snapshot.val();
-          const workshopKeys = Object.keys(workshopData);
-          const workshopList = Object.values(workshopData);
+    firebase.database().ref(`/workshops/`).on("value", (workshopSnap) => {
+      if (workshopSnap.val() != null) {
+        const workshopData = workshopSnap.val();
+        const workshopKeys = Object.keys(workshopData);
+        const workshopList = Object.values(workshopData);
 
-          const removedWorkshopList = [];
-          const displayedWorkshopList = [];
+        getWorkshopPhotos(workshopKeys, workshopList).then((workshopURLs) => {
+          if (workshopURLs && workshopURLs.length > 0) {
+            console.log("Fetching Tag data...");
+            firebase.database().ref(`/tags/`).on("value", (tagSnap) => {
+              if (tagSnap.val() != null) {
+                const tagData = tagSnap.val();
 
-          getWorkshopPhotos(workshopKeys, workshopList)
-            .then((workshopURLs) => {
-              if (workshopURLs && workshopURLs.length > 0) {
+                const removedWorkshopList = [];
+                const displayedWorkshopList = [];
+                
                 workshopList.forEach((event, index) => {
+                  let workshopTagList = [];
+
                   event.id = workshopKeys[index];
                   event.shortInfo = truncate(event.text);
                   event.imageURL = workshopURLs[index];
+        
+                  // Attach Tags to Workshop Event
+                  Object.values(tagData).forEach((tagObj, index) => {
+                    const tagWorkshopData = tagObj["workshops"];
+
+                    if (tagWorkshopData && Object.keys(tagWorkshopData).includes(event.id)) {
+                      workshopTagList.push(Object.keys(tagData)[index]);
+                    }
+                  });
+
+                  event.tags = workshopTagList;
 
                   if (event.removed === "true") {
                     removedWorkshopList.push(event);
@@ -109,22 +129,27 @@ export default function Dashboard({ firebase, exitApp, handleError, hasError, se
                     displayedWorkshopList.push(event);
                   }
                 });
-  
+
+                setHappinessTags(tagData);
                 setRemovedWorkshopList(removedWorkshopList);
                 setWorkshopList(displayedWorkshopList);
-
                 setIsLoading(false);
               } else {
-                setWorkshopList([]);
                 setIsLoading(false);
-                handleError("There was an error with the workshop photos. Please refresh and try again.");
+                handleError("An error occured. Please refresh and try again.");
               }
-            })
-        } else {
-          setIsLoading(false);
-          handleError("An error occured. Please refresh and try again.");
-        }
-      });
+            });
+          } else {
+            setWorkshopList([]);
+            setIsLoading(false);
+            handleError("There was an error with the workshop photos. Please refresh and try again.");
+          }
+        });
+      } else {
+        setIsLoading(false);
+        handleError("An error occured. Please refresh and try again.");
+      }
+    });
   };
 
 
@@ -224,10 +249,22 @@ export default function Dashboard({ firebase, exitApp, handleError, hasError, se
           </ListItem> */}
           <ListItem
             button
+            key={"tags-i"}
+            onClick={() => handlePageChange("tags")}
+            className={`list-icon ${
+              location === "tags" ? "selected-menu tags" : ""
+            }`}
+          >
+            <ListItemIcon>
+              <TagIcon />
+            </ListItemIcon>
+          </ListItem>
+          <ListItem
+            button
             key={"users-i"}
             onClick={() => handlePageChange("removed-workshops")}
             className={`list-icon ${
-              location === "removed-workshops" ? "selected-menu users" : ""
+              location === "removed-workshops" ? "selected-menu removed-workshops" : ""
             }`}
           >
             <ListItemIcon>
@@ -258,6 +295,8 @@ export default function Dashboard({ firebase, exitApp, handleError, hasError, se
               ? "workshops"
               : location === "removed-workshops"
               ? "Removed Workshops"
+              : location === "tags"
+              ? "tags"
               : null
           }`}
         >
@@ -270,6 +309,8 @@ export default function Dashboard({ firebase, exitApp, handleError, hasError, se
               ? "workshops"
               : location === "removed-workshops"
               ? "removed workshops"
+              : location === "tags"
+              ? "tags"
               : null}
           </h2>
           {location === "workshops" ? (
@@ -282,6 +323,19 @@ export default function Dashboard({ firebase, exitApp, handleError, hasError, se
                 startIcon={<AddIcon />}
               >
                 Add Workshop
+              </Button>
+            </div>
+          ) : null}
+          {location === "tags" ? (
+            <div className="page-actions">
+              <Button
+                variant="contained"
+                className="tag-add-btn"
+                disabled={isLoading ? true : false}
+                onClick={() => setAddTagOpen(true)}
+                startIcon={<AddIcon />}
+              >
+                Add Tag
               </Button>
             </div>
           ) : null}
@@ -319,6 +373,13 @@ export default function Dashboard({ firebase, exitApp, handleError, hasError, se
                     <h1>{numberWithCommas(removedWorkshopList.length)}</h1>
                     <h3>Removed Workshops</h3>
                   </Button>
+                  <Button
+                    className="count-icon tags"
+                    onClick={() => handlePageChange("tags")}
+                  >
+                    <h1>{numberWithCommas(Object.keys(happinessTags).length)}</h1>
+                    <h3>Tags</h3>
+                  </Button>
                 </div>
               </>
             ) : location === "users" ? (
@@ -332,13 +393,15 @@ export default function Dashboard({ firebase, exitApp, handleError, hasError, se
                 <div className="table-holder">
                   <WorkshopsTable
                     workshopList={workshopList}
+                    error={error}
                     handleError={handleError}
+                    requiredError={requiredError}
+                    handleRequiredError={handleRequiredError}
                     firebase={firebase}
                     truncate={truncate}
                     addWorkshopOpen={addWorkshopOpen}
                     setAddWorkshopOpen={setAddWorkshopOpen}
-                    hasError={hasError}
-                    setError={setError}
+                    happinessTags={happinessTags}
                   />
                 </div>
               </>
@@ -350,8 +413,22 @@ export default function Dashboard({ firebase, exitApp, handleError, hasError, se
                     handleError={handleError}
                     firebase={firebase}
                     truncate={truncate}
-                    hasError={hasError}
-                    setError={setError}
+                    error={error}
+                  />
+                </div>
+              </>
+            ) : location === "tags" ? (
+              <>
+                <div className="table-holder">
+                  <TagsTable
+                    tagList={happinessTags}
+                    workshopList={workshopList}
+                    handleError={handleError}
+                    firebase={firebase}
+                    requiredError={requiredError}
+                    handleRequiredError={handleRequiredError}
+                    addTagOpen={addTagOpen}
+                    setAddTagOpen={setAddTagOpen}
                   />
                 </div>
               </>

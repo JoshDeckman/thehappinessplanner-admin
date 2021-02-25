@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import PropTypes from "prop-types";
 import clsx from "clsx";
 
@@ -37,6 +37,7 @@ import MarkdownEditor from "./MarkdownEditor";
 import ColorPicker from 'material-ui-color-picker';
 
 import Dropzone from 'react-dropzone';
+import Tags from "./Tags";
 
 const ReactMarkdown = require('react-markdown/with-html');
 
@@ -93,7 +94,8 @@ function stableSort(array, comparator) {
 }
 
 const headCells = [
-  { id: "title", numeric: false, disablePadding: false, label: "Tag Name" },
+  { id: "title", numeric: false, disablePadding: false, label: "Mailchimp Tag" },
+  { id: "tags", numeric: false, disablePadding: false, label: "Tags" },
   { id: "newTitle", numeric: false, disablePadding: false, label: "Title" },
   { id: "leader", numeric: false, disablePadding: false, label: "Leader" },
   { id: "url", numeric: false, disablePadding: false, label: "URL" },
@@ -124,7 +126,7 @@ function EnhancedTableHead(props) {
             indeterminate={numSelected > 0 && numSelected < rowCount}
             checked={rowCount > 0 && numSelected === rowCount}
             onChange={onSelectAllClick}
-            inputProps={{ "aria-label": "select all desserts" }}
+            inputProps={{ "aria-label": "select all workshops" }}
           />
         </TableCell>
         {headCells.map((headCell) => (
@@ -261,20 +263,32 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export default function WorkshopsTable({ workshopList, handleError, firebase, truncate, addWorkshopOpen, setAddWorkshopOpen, hasError, setError }) {
+export default function WorkshopsTable({ 
+  workshopList, 
+  firebase, 
+  addWorkshopOpen, 
+  setAddWorkshopOpen, 
+  error, 
+  handleError,
+  requiredError,
+  handleRequiredError,
+  happinessTags
+}) {
   const classes = useStyles();
-  const [order, setOrder] = React.useState("asc");
-  const [orderBy, setOrderBy] = React.useState("");
-  const [selected, setSelected] = React.useState([]);
-  const [page, setPage] = React.useState(0);
-  const [dense] = React.useState(false);
-  const [rowsPerPage, setRowsPerPage] = React.useState(25);
-  const [isLoading, setIsLoading] = React.useState(false);
-  const [editWorkshopOpen, setEditWorkshopOpen] = React.useState(false);
-  const [confirmOpen, setConfirmOpen] = React.useState(false);
-  const [workshopFormInfo, setWorkshopFormInfo] = React.useState({});
-  const [photo, setPhotoPreview] = React.useState(null);
-  const [file, setFile] = React.useState(null);
+  const [order, setOrder] = useState("asc");
+  const [orderBy, setOrderBy] = useState("");
+  const [selected, setSelected] = useState([]);
+  const [page, setPage] = useState(0);
+  const [dense] = useState(false);
+  const [rowsPerPage, setRowsPerPage] = useState(25);
+  const [isLoading, setIsLoading] = useState(false);
+  const [editWorkshopOpen, setEditWorkshopOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [workshopFormInfo, setWorkshopFormInfo] = useState({});
+  const [photo, setPhotoPreview] = useState(null);
+  const [file, setFile] = useState(null);
+  const [openTagDialog, setTagDialogOpen] = useState(false);
+  const [addTagLoading, setAddTagLoading] = useState(false);
 
   const handleClickOpen = () => {
     if (selected.length === 1) {
@@ -297,7 +311,7 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
     setSelected([]); 
     setPhotoPreview(null);
     setFile(null);
-    setError(false);     
+    handleError(false);     
   };
 
   const handleRequestSort = (event, property) => {
@@ -368,8 +382,7 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
               url: workshopFormInfo.url
             })
             .then(() => {
-              setIsLoading(false);
-              handleClose();
+              editWorkshopTags(selected[0]);          
             })
             .catch((error) => {
               setIsLoading(false);
@@ -393,14 +406,66 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
           url: workshopFormInfo.url
         })
         .then(() => {
-          setIsLoading(false);
-          handleClose();
+          editWorkshopTags(selected[0]);
         })
         .catch((error) => {
           setIsLoading(false);
           handleClose();
           handleError("Workshop could not be updated. Please try again.");
         });
+    }
+  };
+
+  const editWorkshopTags = (workshopId) => {
+    const workshopTagPromises = [];
+    const workshopTagList = [];
+    const newWorkshopTagList = workshopFormInfo.tags;
+
+    // Get Original Workshop Tag List Names
+    Object.values(happinessTags).forEach((tagObj, index) => {
+      const tagWorkshopData = tagObj["workshops"];
+
+      if (tagWorkshopData && Object.keys(tagWorkshopData).includes(workshopId)) {
+        workshopTagList.push(Object.keys(happinessTags)[index]);
+      }
+    });
+
+    // Compare two areas with equals function
+    const equals = (a, b) =>
+      a.length === b.length &&
+      a.every((v, i) => v === b[i]);
+
+    if (equals(workshopTagList, newWorkshopTagList)) {
+      setIsLoading(false);
+      handleClose();
+    } else {
+      // Remove Tags if necessary 
+      workshopTagList.forEach(tag => {
+        if (!newWorkshopTagList.includes(tag)) {
+          let workshopTagRef = firebase.database().ref(`tags/${tag}/workshops/${workshopId}`);
+          workshopTagPromises.push(workshopTagRef.remove());
+        }
+      });
+
+      // Add Tags if necessary
+      newWorkshopTagList.forEach(newTag => {
+        if (!workshopTagList.includes(newTag)) {
+          let workshopTagRef = firebase.database().ref(`tags/${newTag}/workshops/${workshopId}`);
+          workshopTagPromises.push(workshopTagRef.update({
+            timestamp: new Date().getTime()
+          }));
+        }
+      });
+
+      Promise.all(workshopTagPromises).then(() => {
+        setIsLoading(false);
+        handleClose();
+      })
+      .catch((error) => {
+        setIsLoading(false);
+        handleClose();
+        handleError("Workshop could not be added. Please try again.");
+      });
     }
   };
 
@@ -414,10 +479,10 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
     
     if (requiredFields) {
       const workshopRef = firebase.database().ref("workshops/");
-
+      
       const newWorkshopRef = workshopRef.push();
       const newWorkshopKey = newWorkshopRef.key;
-  
+      
       const storageRef = firebase.storage().ref();
       const storageWorkshopRef = storageRef.child(`workshops/${newWorkshopKey}/image.jpg`);
 
@@ -437,8 +502,29 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
               url: workshopFormInfo.url
             })
             .then(() => {
-              setIsLoading(false);
-              handleClose();
+              if (workshopFormInfo.tags && workshopFormInfo.tags.length > 0) {
+                const workshopTagPromises = [];
+
+                workshopFormInfo.tags.forEach(tag => {
+                  let workshopTagRef = firebase.database().ref(`tags/${tag}/workshops/${newWorkshopKey}`);
+                  workshopTagPromises.push(workshopTagRef.update({
+                    timestamp: new Date().getTime()
+                  }));
+                });
+                
+                Promise.all(workshopTagPromises).then(() => {
+                  setIsLoading(false);
+                  handleClose();
+                })
+                .catch((error) => {
+                  setIsLoading(false);
+                  handleClose();
+                  handleError("Workshop could not be added. Please try again.");
+                });
+              } else {
+                setIsLoading(false);
+                handleClose();
+              }              
             })
             .catch((error) => {
               setIsLoading(false);
@@ -452,7 +538,7 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
           handleClose();
         });
     } else {
-      handleError("Please complete the required fields");
+      handleRequiredError("Please complete the required fields");
       setIsLoading(false);
     }
   };
@@ -532,8 +618,6 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
         ...prevFormInfo.days.slice(index + 1)
       ]
     }));
-
-    console.log("wfi", workshopFormInfo)
   };
 
   const updateColor = (newColor, colorKey) => {
@@ -611,6 +695,22 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
     return colorStr;
   };
 
+  const parseTags = (tags) => {
+    let tagStr = "";
+
+    if (tags.length > 0) {
+      tags.forEach((tag, index) => {
+        if (index < tags.length - 1) {
+          tagStr += `${tag}, `;
+        } else {
+          tagStr += tag;
+        }
+      });
+    }
+
+    return tagStr;
+  };
+
   const parseDateString = (date) => {   
     const dateObj = new Date(date);
 
@@ -661,6 +761,38 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
     setFile(acceptedFiles[0]);
   };
 
+  const handleWorkshopTags = (updatedWorkshopTags) => {
+    setWorkshopFormInfo(prevFormInfo => ({
+      ...prevFormInfo,
+      tags: updatedWorkshopTags
+    }));
+  };
+
+  const addNewTag = newTag => {
+    setAddTagLoading(true);
+
+    const tagRef = firebase.database().ref('/tags/');
+
+    tagRef.update({
+      [newTag]: {
+        active: true
+      }
+    }).then(() => {
+      setTagDialogOpen(false);
+      setAddTagLoading(false);
+
+      const updatedWorkshopTags = workshopFormInfo.tags? [
+        ...workshopFormInfo.tags,
+        newTag
+      ]: [newTag];
+
+      handleWorkshopTags(updatedWorkshopTags);
+    }).catch((error) => {
+      setAddTagLoading(false);
+      handleError("Tag could not be saved. Please try again.");
+    });
+  };
+
   const titleValue = workshopFormInfo.newTitle
     ? workshopFormInfo.newTitle
     : workshopFormInfo.title;
@@ -703,21 +835,30 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
           {addWorkshopOpen? "Add Workshop" : "Edit Workshop"}
         </DialogTitle>
           <DialogContent className="workshop-dialog-form">
-            <TextField
-              autoFocus
-              margin="dense"
-              id={addWorkshopOpen? "title": "newTitle"}
-              disabled={isLoading}
-              label={addWorkshopOpen? "Title / Tag (This will be the tag for the workshop in MailChimp)" : "Title"}
-              className="workshop-title"
-              type="title"
-              onChange={workshopRecord}
-              value={titleValue}
-              fullWidth
-              required
-              error={hasError && !titleValue}
-            />
             <div className="input-table">
+              <TextField
+                autoFocus
+                margin="dense"
+                id={addWorkshopOpen? "title": "newTitle"}
+                disabled={isLoading}
+                label={addWorkshopOpen? "Title / MailChimp Tag" : "Title"}
+                className="workshop-title"
+                type="title"
+                onChange={workshopRecord}
+                value={titleValue}
+                fullWidth
+                required
+                error={requiredError && !titleValue}
+              />
+              <Tags 
+                handleWorkshopTags={handleWorkshopTags} 
+                workshopTags={workshopFormInfo.tags} 
+                happinessTags={happinessTags}
+                addNewTag={addNewTag}
+                setTagDialogOpen={setTagDialogOpen}
+                openTagDialog={openTagDialog}
+                addTagLoading={addTagLoading}
+              />
               <TextField
                 autoFocus
                 margin="dense"
@@ -732,8 +873,7 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
                     : ""
                 }
                 required
-                required
-                error={hasError && !workshopFormInfo.leader}
+                error={requiredError && !workshopFormInfo.leader}
               />
               <TextField
                 autoFocus
@@ -749,7 +889,7 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
                     : ""
                 }
                 required
-                error={hasError && !workshopFormInfo.url}
+                error={requiredError && !workshopFormInfo.url}
               />
               <div className="datetime-field-container">
                 {workshopFormInfo.days?
@@ -772,7 +912,7 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
                           </InputAdornment>
                         ),
                       }: {}}
-                      error={hasError && !workshopFormInfo.days}
+                      error={requiredError && !workshopFormInfo.days}
                     />
                   )):
                   <TextField
@@ -786,7 +926,7 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
                       shrink: true,
                     }}
                     required
-                    error={hasError && !workshopFormInfo.days}
+                    error={requiredError && !workshopFormInfo.days}
                   />
                 }
                 <Typography style={{ fontWeight: "bold" }}>{`*Convert desired date to local time (GMT ${-(new Date().getTimezoneOffset() / 60)}) before entering`}</Typography>
@@ -802,7 +942,7 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
               : null}
               <div className="color-field-container">
                 {workshopColorKeys.map((colorKey, index) => (
-                 <div className="color-field">
+                 <div key={`color-container-${index}`} className="color-field">
                    <ColorPicker
                      key={`color-${index}`}
                      name="color"
@@ -810,6 +950,8 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
                      value={workshopFormInfo.colors && workshopFormInfo.colors[colorKey]? `${workshopFormInfo.colors[colorKey]}`: "#00000"}
                      onChange={(color) => updateColor(color, colorKey)}
                      InputProps={{ value: workshopFormInfo.colors && workshopFormInfo.colors[colorKey]? `${workshopFormInfo.colors[colorKey]}`: "#00000" }}
+                     required
+                     error={requiredError && (!workshopFormInfo.colors || workshopFormInfo.colors && !workshopFormInfo.colors[colorKey])}
                    />
                  </div>
                 ))}
@@ -931,6 +1073,13 @@ export default function WorkshopsTable({ workshopList, handleError, firebase, tr
                         className="workshop-table-cell"
                       >
                         {row.title}
+                      </TableCell>
+                      <TableCell
+                        component="th"
+                        align="left"
+                        className="workshop-table-cell"
+                      >
+                        {parseTags(row.tags)}
                       </TableCell>
                       <TableCell
                         component="th"
