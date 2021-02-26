@@ -565,7 +565,7 @@ export default function TagsTable({ tagList, workshopList, handleError, firebase
                         />
                       </TableCell>
                       <TableCell component="th" align="left">{row}</TableCell>
-                      <TableCell style={{ maxWidth: "200px" }} align="left">{getWorkshops(row)}</TableCell>
+                      <TableCell align="left">{getWorkshops(row)}</TableCell>
                     </TableRow>
                   );
                 })}
