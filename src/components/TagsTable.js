@@ -26,6 +26,7 @@ import DialogTitle from '@material-ui/core/DialogTitle';
 import Button from '@material-ui/core/Button';
 import TextField from "@material-ui/core/TextField";
 import DialogContent from "@material-ui/core/DialogContent";
+import DialogContentText from '@material-ui/core/DialogContentText';
 
 import EditIcon from "@material-ui/icons/Edit";
 import DeleteIcon from '@material-ui/icons/Delete';
@@ -223,6 +224,7 @@ export default function TagsTable({ tagList, workshopList, handleError, firebase
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [editTagOpen, setEditTagOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [viewMoreWorkshops, setViewMoreWorkshops] = useState([]);
 
   const handleEditTag = () => {
     setIsLoading(true);
@@ -390,7 +392,7 @@ export default function TagsTable({ tagList, workshopList, handleError, firebase
 
   const getWorkshops = tagName => {
     const tagData = tagList[tagName];
-    let workshopTitles = "";
+    const workshopTitles = [];
 
     if (tagData.workshops) {
       const workshopIds = Object.keys(tagData.workshops);
@@ -399,23 +401,61 @@ export default function TagsTable({ tagList, workshopList, handleError, firebase
         const workshopData = workshopList.find(workshopData => workshopData.id === workshopId);
   
         if (workshopData) {
-          if (index < workshopIds.length - 1) {
-            workshopTitles += `${workshopData.title}, `
-          } else {
-            workshopTitles += workshopData.title;
-          }
+          workshopTitles.push(workshopData.title);
         }
       });
     }
     
-    return workshopTitles;
+    return (
+      <div>
+        {viewMoreWorkshops.includes(tagName)? 
+            <div className="workshop-tag-row-container">
+              <Typography>{workshopTitles.join(", ")}</Typography>
+              <Typography className="view-more-btn" onClick={(e) => removeWorkshopViewMore(e, tagName)}>(collapse)</Typography>
+            </div>
+          : (
+            <div className="workshop-tag-row-container">
+              <Typography>{workshopTitles[0]}</Typography>
+              <Typography className="view-more-btn" onClick={(e) => addWorkshopViewMore(e, tagName)}>{workshopTitles.length > 1? `(+ ${workshopTitles.length - 1} more)`: ""}</Typography>
+            </div>
+          )
+        }
+      </div>
+    );
   };
 
+  const addWorkshopViewMore = (e, tagName) => {
+    e.stopPropagation();
+    setViewMoreWorkshops(prevViewMoreWorkshops => ([
+      ...prevViewMoreWorkshops,
+      tagName
+    ]));   
+  };
+
+  const removeWorkshopViewMore = (e, tagName) => {
+    e.stopPropagation();
+    const tagNameIndex = viewMoreWorkshops.findIndex(workshop => tagName === workshop);
+    const updatedViewMoreWorkshops = [
+      ...viewMoreWorkshops.slice(0, tagNameIndex),
+      ...viewMoreWorkshops.slice(tagNameIndex + 1, viewMoreWorkshops.length)
+    ]
+
+    setViewMoreWorkshops(updatedViewMoreWorkshops);   
+  };
+  
   return (
     <div className={classes.root}>
 
       <Dialog open={confirmOpen} onClose={isLoading? null: closeAskforDelete} aria-labelledby="delete-tag-dialog" className="workshop-dialog">
-        <DialogTitle id="form-dialog-title">{isLoading? `(${selected.length}) tags being deleted...`: `(${selected.length}) tags to be deleted`}</DialogTitle>
+        <DialogTitle id="form-dialog-title">{isLoading? `(${selected.length}) tags being deleted...`: `(${selected.length}) tag(s) to be deleted`}</DialogTitle>
+        <DialogContent>
+          <Typography style={{ fontWeight: "bold", marginBottom: "10px" }}>
+            *Deleting a tag will also delete any associations with the tag
+          </Typography>
+          <Typography style={{ fontWeight: "bold" }}>
+            (e.g. If a workshop was previously tagged as "Health", it will no longer be tagged as "Health")
+          </Typography>
+        </DialogContent>
         <DialogActions>
           <Button onClick={closeAskforDelete} disabled={isLoading} color="primary">
             Cancel
@@ -525,7 +565,7 @@ export default function TagsTable({ tagList, workshopList, handleError, firebase
                         />
                       </TableCell>
                       <TableCell component="th" align="left">{row}</TableCell>
-                      <TableCell align="left">{getWorkshops(row)}</TableCell>
+                      <TableCell style={{ maxWidth: "200px" }} align="left">{getWorkshops(row)}</TableCell>
                     </TableRow>
                   );
                 })}
